@@ -11,8 +11,14 @@ const validateEmail = function (email) {
 
 const schema = new mongoose.Schema({
   _id: Number,
-  firstName: String,
-  lastName: String,
+  firstName: {
+    en: String,
+    ar: String
+  },
+  lastName: {
+    en: String,
+    ar: String
+  },
   email: {
     type: String,
     required: true,
@@ -21,13 +27,12 @@ const schema = new mongoose.Schema({
   },
   password: { type: String, select: false },
   image:{ type : String , default:"default.jpg"},
-  role: { type: String,required: true },
-  phoneNumber: {type:String, unique:true},
-  active: {
-    type: Boolean,
-    default: true,
+  role: {
+    en: String,
+    ar: String,
+    required: true
   },
-  
+  phoneNumber: {type:String, unique:true},
   code: String,
   passwordResetExpires: Date,
 }
