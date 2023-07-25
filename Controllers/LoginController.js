@@ -23,13 +23,13 @@ exports.login = catchAsync(async (req,res,next)=>{
     }
 
 const user = await UserSchema.findOne({email:email}).select("+password");
-console.log((await user.correctPassword(password, user.password)))
+
 if(!user || !(await user.correctPassword(password, user.password))){
     return next(new AppError(`Incorrect email or password`, 401));
 }
 
 
-const token = JWT.sign({id:user._id , role:user.role },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
+const token = JWT.sign({id:user._id , role:user.role.en },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
 
 res.status(200).json({
     status:"success" , 
@@ -46,14 +46,21 @@ exports.forgetpassword = catchAsync(async (req,res,next)=>{
     const resetToken = await user.createPasswordRandomToken()
     await user.save({validateBeforeSave : false });
 
-    const message = `<p>Hi ${user.firstName}<br>Forgot your password? No worries, we’ve got you covered. Submit with that code <span style="color:red; font-weight:bold;">${resetToken}</span> and new password to reset it.🚚</p>`
+   // const message = `<p>Hi ${user.firstName}<br>Forgot your password? No worries, we’ve got you covered. Submit with that code <span style="color:red; font-weight:bold;">${resetToken}</span> and new password to reset it.🚚</p>`
+    const resetLink = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
 
-try{ await sendEmail({
+    const message = `<p>Hi ${user.firstName},</p>
+      <p>Forgot your password? No worries, we’ve got you covered.</p>
+      <p>Click on the button below to reset your password:</p>
+      <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background-color:#007bff;color:#fff;border-radius:5px;text-decoration:none;">Reset Password</a>
+      <p>If you didn't request a password reset, please ignore this email.</p>`;
+  
+      try{ await sendEmail({
      to: user.email,
      subject:'Your password reset code valid for 10 minutes only!',
      message
     });
-    
+
 res.status(200).json({ message:"success send email"});
 
 }catch(err){

@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const AutoIncrement = require("mongoose-sequence")(mongoose);
+
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { type } = require("os");
 
 //create schema object
 const validateEmail = function (email) {
@@ -10,7 +12,6 @@ const validateEmail = function (email) {
 };
 
 const schema = new mongoose.Schema({
-  _id: Number,
   firstName: {
     en: String,
     ar: String
@@ -21,16 +22,15 @@ const schema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
+    required : true,
     validate: [validateEmail, "invalid email"],
     unique: true,
   },
   password: { type: String, select: false },
-  image:{ type : String , default:"default.jpg"},
+  //image:{ type : String , default:"default.jpg"},
   role: {
-    en: String,
-    ar: String,
-    required: true
+    en: { type: String , required : true},
+    ar: { type: String , required : true},
   },
   phoneNumber: {type:String, unique:true},
   code: String,
@@ -53,7 +53,6 @@ schema.methods.createPasswordRandomToken = async function () {
   return resetToken;
 };
 
-schema.plugin(AutoIncrement, { id: "user_id", inc_field: "_id" });
 
 //mapping
 mongoose.model("user", schema);
