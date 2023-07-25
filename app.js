@@ -3,16 +3,18 @@ const cors = require("cors");
 const morgan = require("morgan");
 const mongoose=require("mongoose");
 var bodyParser = require('body-parser')
+require("dotenv").config({ path: "config.env" });
 
-// const AuthenticateMW=require("./Core/auth/AuthenticateMW");
 
 //server
 const server = express();
 let port=process.env.PORT||8080;
 
 //db connection
-mongoose.set('strictQuery', true);  //warning
- mongoose.connect("mongodb+srv://rawangamaal21:iti@node.gvt5cis.mongodb.net/?retryWrites=true&w=majority")
+const db = process.env.DATABASE
+
+ mongoose.set('strictQuery', true);  //warning
+ mongoose.connect(db)
         .then(()=>{
             console.log("DB connected");
             server.listen(port,()=>{
@@ -33,16 +35,22 @@ server.use(bodyParser.json())
 
 //Routes 
 // server.use(loginRoute);
-
 // server.use(AuthenticateMW);
 
 
 //Not Found Middleware
-server.use((request,response,next)=>{
-    response.status(404).json({message:"Not Found"})
-})
+app.use((request, response, next) => {
+	response
+		.status(404)
+		.json({ message: `${request.originalUrl} not found on this server!` });
+});
 
-//ERROR handeling Middleware
-server.use((error,request,response,next)=>{
-    response.status(500).json({message:error+""});
-})
+//Global error handeling Middleware
+app.use((error, request, response, next) => {
+	if (error.statusCode && error.statusCode !== 500) {
+		// the specific status code from the AppError
+		response.status(error.statusCode).json({ message: error.message });
+	} else {
+        response.status(500).json({ message: error + "" });
+	}
+});
