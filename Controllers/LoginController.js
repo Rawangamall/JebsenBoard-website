@@ -46,10 +46,8 @@ exports.forgetpassword = catchAsync(async (req,res,next)=>{
     const resetToken = await user.createPasswordRandomToken()
     await user.save({validateBeforeSave : false });
 
-   // const message = `<p>Hi ${user.firstName}<br>Forgot your password? No worries, we’ve got you covered. Submit with that code <span style="color:red; font-weight:bold;">${resetToken}</span> and new password to reset it.🚚</p>`
     const resetLink = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
-
-    const message = `<p>Hi ${user.firstName},</p>
+    const message = `<p>Hi ${user.firstName.en},</p>
       <p>Forgot your password? No worries, we’ve got you covered.</p>
       <p>Click on the button below to reset your password:</p>
       <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background-color:#007bff;color:#fff;border-radius:5px;text-decoration:none;">Reset Password</a>
@@ -76,12 +74,12 @@ res.status(200).json({ message:"success send email"});
 
 
 exports.resetpassword = catchAsync(async (req,res,next)=>{
-
-    if((req.body.code == "") && (req.body.password) == "" && (req.body.confirmPassword) == "") {
+console.log(req.params.code)
+    if((req.params.code == "") && (req.body.password) == "" && (req.body.confirmPassword) == "") {
         return next(new AppError("Enter valid input"),400);
     }
 
-const hashToken = crypto.createHash('sha256').update(req.body.code).digest('hex');
+const hashToken = crypto.createHash('sha256').update(req.params.code).digest('hex');
 
 const user = await UserSchema.findOne({code: hashToken ,
      passwordResetExpires : {$gt : Date.now()}

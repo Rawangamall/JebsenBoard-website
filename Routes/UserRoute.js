@@ -6,6 +6,12 @@ const validationData = require("./../Core/Validations/User")
 const AuthenticationMW = require("./../Middlewares/authenticationMW")
 
 router.route("/users")
-       .post(AuthenticationMW.auth,validationData.UserValidPOST,userController.addUser) 
+      .get(AuthenticationMW.auth,userController.getallUsers) 
+      .post(AuthenticationMW.auth,validationData.UserValidPOST,userController.addUser) 
+
+router.route("/user/:_id")
+      .get(AuthenticationMW.auth,userController.getUser) 
+      .patch(AuthenticationMW.auth,validationData.UserValidPATCH,userController.editUser) 
+      .delete(AuthenticationMW.auth,userController.delUser) 
 
 module.exports=router;
