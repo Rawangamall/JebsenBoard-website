@@ -26,12 +26,15 @@ const schema = new mongoose.Schema({
     unique: true,
   },
   password: { type: String, select: false },
-  //image:{ type : String , default:"default.jpg"},
+  image:{ type : String , default:"default.jpg"},
   role: {
-    en: { type: String , required : true},
-    ar: { type: String , required : true},
+    en: { type: String ,default:"employee", required : true},
+    ar: { type: String ,default:"موظف", required : true},
   },
-  phoneNumber: {type:String, unique:true},
+  phoneNumber: { 
+  en: { type: String , unique : true},
+  ar: { type: String , unique : true}
+  },
   code: String,
   passwordResetExpires: Date,
 }

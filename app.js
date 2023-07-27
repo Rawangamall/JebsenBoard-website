@@ -1,6 +1,7 @@
 const express= require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const path=require("path");
 const mongoose=require("mongoose");
 var bodyParser = require('body-parser')
 require("dotenv").config({ path: "config.env" });
@@ -35,6 +36,8 @@ mongoose.set('strictQuery', true);  //warning
 server.use(express.json());
 server.use(express.urlencoded({extended:false}));
 server.use(bodyParser.json())
+
+server.use('user/image', express.static(path.join(__dirname, 'Core/images/User')));
 
 //Routes 
 

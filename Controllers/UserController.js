@@ -19,7 +19,9 @@ exports.addUser = CatchAsync(async (request, response, next) => {
         'lastName.ar': request.body.lastName_ar,
         email: request.body.email,
         password: hash,
-        phoneNumber: request.body.phoneNumber,
+        image:"default.jpg",
+        'phoneNumber.en': request.body.phoneNumber,
+        'phoneNumber.ar': request.body.phoneNumber_ar,
         'role.en': request.body.role,
         'role.ar': request.body.role_ar
       });
@@ -73,7 +75,8 @@ exports.getUser = CatchAsync(async (request, response, next) => {
       'lastName.ar': request.body.lastName_ar,
       email: request.body.email,
       password: request.body.password,
-      phoneNumber: request.body.phoneNumber,
+      'phoneNumber.en': request.body.phoneNumber,
+      'phoneNumber.ar': request.body.phoneNumber_ar,
       'role.en': request.body.role,
       'role.ar': request.body.role_ar,
     });
