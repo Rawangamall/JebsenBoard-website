@@ -23,7 +23,7 @@ const CategorySchema = mongoose.model("category");
 
   if(products.docs == "") 
   {return next(new AppError('There\'s no product', 404));}
-  
+
   res.status(200).json(products);
 
 });
@@ -120,8 +120,6 @@ exports.updateProduct = catchAsync(async (request, res, next) => {
 
 exports.deleteProduct = catchAsync(async (req, res, next) => {
   const ObjectId = Object( req.params.id);
-
-  console.log(ObjectId);
   
   const product = await ProductSchema.findById(ObjectId);
   if (!product) {
@@ -134,6 +132,49 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
 }
 );
 
+//get products of specific category - search - filter - sorting
+exports.getProductsCategory = catchAsync(async (request, response, next) => {
+
+  const categoryID = request.query.categoryID;
+  const searchKey = request.query.searchkey || "";
+
+  let query = {};
+  
+	if (searchKey) {
+	  const objectId = mongoose.Types.ObjectId.isValid(searchKey)
+		? mongoose.Types.ObjectId(searchKey)
+		: null;
+  
+	  const regexSearchKey = new RegExp(searchKey, "i");
+  
+    query = {
+      $and: [
+        { category_id: categoryID },
+        {
+          $or: [
+            { _id: objectId },
+            { 'name.en': regexSearchKey },
+            { 'material.en': regexSearchKey },
+            { 'name.ar': regexSearchKey },
+            { 'material.ar': regexSearchKey },
+          ],
+        },
+      ],
+    };
+  } else {
+    query = { category_id: categoryID };
+  }
+
+  const options = {
+    page: parseInt(request.query.page) || 1,
+    limit: parseInt(request.query.limit) || 10,
+    sort: { createdAt: -1 },
+  };
+  
+  const data = await ProductSchema.paginate(query, options);
+
+   response.status(200).json(data);
+});
 
  
 

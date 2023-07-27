@@ -17,5 +17,8 @@ router.route("/products/:id")
         .patch(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),validationMW, ProductController.updateProduct)
         .delete(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),validationMW ,ProductController.deleteProduct)
 
+router.route("/product/category")
+      .get(AuthenticationMW.auth ,ProductController.getProductsCategory)
+
 
 module.exports=router;

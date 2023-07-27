@@ -35,13 +35,35 @@ exports.addUser = CatchAsync(async (request, response, next) => {
   exports.getallUsers = CatchAsync(async (request, response, next) => {
     const page = parseInt(request.query.page) || 1;
     const limit = parseInt(request.query.limit) || 10;
-  
+    const searchKey = request.query.searchkey || "";
+
+    let query = {};
+
+    if (searchKey) {
+      const objectId = mongoose.Types.ObjectId.isValid(searchKey)
+      ? mongoose.Types.ObjectId(searchKey)
+      : null;
+    
+      const regexSearchKey = new RegExp(searchKey, "i");
+      query = {
+          
+            $or: [
+              { _id: objectId },
+              { 'firstName.en': regexSearchKey },
+              { 'lastName.en': regexSearchKey },
+              { 'firstName.ar': regexSearchKey },
+              { 'lastName.ar': regexSearchKey },
+              { email: regexSearchKey },
+            ],
+          
+      };
+    }
     const options = {
       page,
       limit
     };
   
-    const result = await UserSchema.paginate({}, options);
+    const result = await UserSchema.paginate(query, options);
   
     response.status(200).json(result);
   });

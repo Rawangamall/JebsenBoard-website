@@ -30,7 +30,7 @@ const Schema = new mongoose.Schema(
         ar: String
       },
       category_id: {
-        type: Number,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Category'
       },
       main_image: { type: String, default: "default.jpg"},
