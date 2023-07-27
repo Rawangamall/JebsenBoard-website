@@ -33,28 +33,15 @@ exports.addUser = CatchAsync(async (request, response, next) => {
   exports.getallUsers = CatchAsync(async (request, response, next) => {
     const page = parseInt(request.query.page) || 1;
     const limit = parseInt(request.query.limit) || 10;
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
   
-    const users = await UserSchema.find().skip(startIndex).limit(limit);
-    const total = await UserSchema.countDocuments();
+    const options = {
+      page,
+      limit
+    };
   
-    const pagination = {};
-    if (endIndex < total) {
-      pagination.next = {
-        page: page + 1,
-      };
-    }
-    if (startIndex > 0) {
-      pagination.previous = {
-        page: page - 1,
-      };
-    }
+    const result = await UserSchema.paginate({}, options);
   
-    response.status(200).json({
-      data: users,
-      pagination
-    });
+    response.status(200).json(result);
   });
 
 exports.getUser = CatchAsync(async (request, response, next) => {

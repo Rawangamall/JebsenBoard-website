@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const { type } = require("os");
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 //create schema object
 const validateEmail = function (email) {
@@ -52,6 +52,7 @@ schema.methods.createPasswordRandomToken = async function () {
   return resetToken;
 };
 
+schema.plugin(mongoosePaginate);
 
 //mapping
 mongoose.model("user", schema);
