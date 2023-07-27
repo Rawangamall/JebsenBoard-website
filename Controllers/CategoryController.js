@@ -1,20 +1,81 @@
 const mongoose = require("mongoose");
 require("../Models/CategoryModel");
 
-// const AppError = require("./../utils/appError");
-// const catchAsync = require("./../utils/CatchAsync");
+const AppError = require("./../utils/appError");
+const catchAsync = require("./../utils/CatchAsync");
 
 const CategorySchema = mongoose.model("category");
 
-const getAll = catchAsync(async (req, res, next) => {
-  const category = await CategorySchema.find();
+ exports.getAll = catchAsync(async (req, res, next) => {
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const options = {
+    page,
+    limit
+  };
+
+  const categories = await CategorySchema.paginate({}, options);
+  if(categories.docs == "") 
+  {return next(new AppError('No category found', 404));}
+
+  res.status(200).json(categories);
+
+});
+
+ exports.addCategory = catchAsync(async (request, response, next) => {
+  
+      const Category = new CategorySchema({
+        'name.en': request.body.name,
+        'name.ar': request.body.name_ar,
+        
+      });
+  
+      const data = await Category.save();
+      response.status(201).json(data);
+  }
+
+);
+
+ exports.getCategory = catchAsync(async (req, res, next) => {
+  const category = await CategorySchema.findById(req.params.id);
+  if(!category) return next(new AppError('No category found', 404))
   res.status(200).json({
     status: "success",
     data: {
-        category
+      category
     }
   });
-});
+}
+);
 
+exports.updateCategory = catchAsync(async (req, res, next) => {
+ 
+    const id = req.params.id;
+    const updateData = req.body;
+
+   
+    const updatedDocument = await CategorySchema.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+    if(!updatedDocument) return next(new AppError('No category found', 404))
+     
+    res.status(200).json(updatedDocument);
+     
+    
+  }
+);
+
+exports.deleteCategory = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  const deleted = await CategorySchema.findByIdAndRemove(id);
+  if(!deleted) return next(new AppError('No category found', 404))
+  
+  res.status(200).json(deleted);
+}
+);
 
 
