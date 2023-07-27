@@ -90,10 +90,12 @@ const user = await UserSchema.findOne({code: hashToken ,
     }
 
 if(req.body.password === req.body.confirmPassword){
+    
 user.password = bcrypt.hashSync(req.body.password ,salt) 
 user.code = undefined    //to be removed from db
 user.passwordResetExpires = undefined
 await user.save();
+
 }else{
     return next(new AppError("Password not matched!"),404);
 }

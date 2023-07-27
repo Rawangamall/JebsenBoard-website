@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 require("../Models/ProductModel");
 require("../Models/CategoryModel");
 
-// const AppError = require("./../utils/appError");
-// const catchAsync = require("./../utils/CatchAsync");
+const AppError = require("./../utils/appError");
+const catchAsync = require("./../utils/CatchAsync");
 
 const ProductSchema = mongoose.model("product");
 const CategorySchema = mongoose.model("category");
