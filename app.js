@@ -5,8 +5,10 @@ const mongoose=require("mongoose");
 var bodyParser = require('body-parser')
 require("dotenv").config({ path: "config.env" });
 
-const LoginRoute = require("./Routes/LoginRoute")
-const UserRoute = require("./Routes/UserRoute")
+const LoginRoute = require("./Routes/LoginRoute");
+const UserRoute = require("./Routes/UserRoute");
+const ProductRoute = require("./Routes/ProductRoute");
+const CategoryRoute = require("./Routes/CategoryRoute");
 
 //server
 const server = express();
@@ -37,9 +39,10 @@ server.use(express.urlencoded({extended:false}));
 server.use(bodyParser.json())
 
 //Routes 
-
 server.use(LoginRoute)
 server.use(UserRoute)
+server.use(ProductRoute)
+server.use(CategoryRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {
