@@ -7,14 +7,21 @@ const catchAsync = require("./../utils/CatchAsync");
 const CategorySchema = mongoose.model("category");
 
  exports.getAll = catchAsync(async (req, res, next) => {
-  const categories = await CategorySchema.find();
-  if(!categories) return next(new AppError('No category found', 404))
-  res.status(200).json({
-    status: "success",
-    data: {
-      categories
-    }
-  });
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const options = {
+    page,
+    limit
+  };
+
+  const categories = await CategorySchema.paginate({}, options);
+  if(categories.docs == "") 
+  {return next(new AppError('No category found', 404));}
+
+  res.status(200).json(categories);
+
 });
 
  exports.addCategory = catchAsync(async (request, response, next) => {

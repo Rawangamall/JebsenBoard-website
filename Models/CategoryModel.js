@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-// const AutoIncrement = require("mongoose-sequence")(mongoose);
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 
 const categorySchema = new mongoose.Schema(
@@ -14,7 +14,7 @@ const categorySchema = new mongoose.Schema(
 );
 
 
-// categorySchema.plugin(AutoIncrement, { id: "category_id", inc_field: "_id" });
+categorySchema.plugin(mongoosePaginate);
 
 //mapping
 mongoose.model("category", categorySchema);

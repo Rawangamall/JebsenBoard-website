@@ -4,18 +4,28 @@ require("../Models/CategoryModel");
 
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
+const { paginateSubDocs } = require("mongoose-paginate-v2");
 
 const ProductSchema = mongoose.model("product");
 const CategorySchema = mongoose.model("category");
 
  exports.getAll = catchAsync(async (req, res, next) => {
-  const products = await ProductSchema.find();
-  res.status(200).json({
-    status: "success",
-    data: {
-      products
-    }
-  });
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const options = {
+    page,
+    limit
+  };
+
+  const products = await ProductSchema.paginate({}, options);
+
+  if(products.docs == "") 
+  {return next(new AppError('There\'s no product', 404));}
+  
+  res.status(200).json(products);
+
 });
 
 exports.addProduct = catchAsync(async (request, response, next) => {

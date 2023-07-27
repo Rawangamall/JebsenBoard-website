@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-// const AutoIncrement = require("mongoose-sequence")(mongoose);
-
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const Schema = new mongoose.Schema(
     {
@@ -43,7 +42,7 @@ const Schema = new mongoose.Schema(
     { timestamps: true }
   );
 
-// Schema.plugin(AutoIncrement, { id: "product_id", inc_field: "_id" });
+  Schema.plugin(mongoosePaginate);
 
 //mapping
 mongoose.model("product", Schema);
