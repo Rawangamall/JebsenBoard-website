@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
 require("../Models/CategoryModel");
 
-// const AppError = require("./../utils/appError");
+const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 
 const CategorySchema = mongoose.model("category");
 
  exports.getAll = catchAsync(async (req, res, next) => {
   const categories = await CategorySchema.find();
-  if(!categories) return res.status(404).json({ error: "category not found" });
+  if(!categories) return next(new AppError('No category found', 404))
   res.status(200).json({
     status: "success",
     data: {
@@ -33,7 +33,7 @@ const CategorySchema = mongoose.model("category");
 
  exports.getCategory = catchAsync(async (req, res, next) => {
   const category = await CategorySchema.findById(req.params.id);
-  if(!category) return res.status(404).json({ error: "category not found" });
+  if(!category) return next(new AppError('No category found', 404))
   res.status(200).json({
     status: "success",
     data: {
@@ -54,7 +54,7 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
       updateData,
       { new: true }
     );
-    if(!updatedDocument) return res.status(404).json({ error: "category not found" });
+    if(!updatedDocument) return next(new AppError('No category found', 404))
      
     res.status(200).json(updatedDocument);
      
@@ -65,7 +65,7 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
 exports.deleteCategory = catchAsync(async (req, res, next) => {
   const id = req.params.id;
   const deleted = await CategorySchema.findByIdAndRemove(id);
-  if(!deleted) return res.status(404).json({ error: "category not found" });
+  if(!deleted) return next(new AppError('No category found', 404))
   
   res.status(200).json(deleted);
 }
