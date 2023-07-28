@@ -33,8 +33,10 @@ exports.addUser = CatchAsync(async (request, response, next) => {
   });
 
   exports.getallUsers = CatchAsync(async (request, response, next) => {
+    
     const page = parseInt(request.query.page) || 1;
     const limit = parseInt(request.query.limit) || 10;
+    const lang = request.headers.lang || "en";
     const searchKey = request.query.searchkey || "";
 
     let query = {};
@@ -58,9 +60,28 @@ exports.addUser = CatchAsync(async (request, response, next) => {
           
       };
     }
+
+    let projection = {
+      "image": 1,
+      "email": 1,
+    };
+    
+    if (lang === "en") {
+      projection["firstName.en"] = 1;
+      projection["lastName.en"] = 1;
+      projection["role.en"] = 1;
+      projection["phoneNumber.en"] = 1;
+    } else {
+      projection["firstName.ar"] = 1;
+      projection["lastName.ar"] = 1;
+      projection["role.ar"] = 1;
+      projection["phoneNumber.ar"] = 1;
+    }
+
     const options = {
       page,
-      limit
+      limit,
+      select: projection 
     };
   
     const result = await UserSchema.paginate(query, options);
@@ -71,7 +92,26 @@ exports.addUser = CatchAsync(async (request, response, next) => {
 exports.getUser = CatchAsync(async (request, response, next) => {
 
   const id = request.params._id;
-  const user = await UserSchema.findById(id)
+  const lang = request.headers.lang || "en";
+
+  let projection = {
+    "image": 1,
+    "email": 1,
+  };
+  
+  if (lang === "en") {
+    projection["firstName.en"] = 1;
+    projection["lastName.en"] = 1;
+    projection["role.en"] = 1;
+    projection["phoneNumber.en"] = 1;
+  } else {
+    projection["firstName.ar"] = 1;
+    projection["lastName.ar"] = 1;
+    projection["role.ar"] = 1;
+    projection["phoneNumber.ar"] = 1;
+  }
+
+  const user = await UserSchema.findById(id).select(projection)
 
   if(!user){
     return next(new AppError(`User not found`, 401));
