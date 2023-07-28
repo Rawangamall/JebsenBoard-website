@@ -205,7 +205,52 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
 });
  
 
+exports.searchProducts = catchAsync(async (req, res, next) => {
+  const searchQuery = req.query.searchkey || "";
+  const lang = req.headers.lang || "en";
 
+  let query = {
+    $or: []
+  };
 
+  const fieldsToSearch = [
+    "name",
+    "material",
+    "description"
+  ];
 
+  fieldsToSearch.forEach(field => {
+    const fieldQuery = {};
+
+    if (lang === "en") {
+      fieldQuery[`${field}.en`] = { $regex: searchQuery, $options: "i" };
+    } else {
+      fieldQuery[`${field}.ar`] = { $regex: searchQuery, $options: "i" };
+    }
+
+    query.$or.push(fieldQuery);
+  });
+
+  const projection = {
+    main_image: 1
+  };
+
+  if (lang === "en") {
+    fieldsToSearch.forEach(field => {
+      projection[`${field}.en`] = 1;
+    });
+  } else {
+    fieldsToSearch.forEach(field => {
+      projection[`${field}.ar`] = 1;
+    });
+  }
+
+  const data = await ProductSchema.find(query).select(projection);
+
+  if (data.length === 0) {
+    return next(new AppError(`There are no matched results for your search.`, 400));
+  }
+
+  res.status(200).json(data);
+});
 

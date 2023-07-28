@@ -20,5 +20,8 @@ router.route("/products/:id")
 router.route("/product/category")
       .get(ProductController.getProductsCategory)
 
+router.route("/product/search")
+      .get(ProductController.searchProducts)
+
 
 module.exports=router;
