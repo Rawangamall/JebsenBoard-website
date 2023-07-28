@@ -2,10 +2,10 @@
 const JWT = require("jsonwebtoken");
 const mongoose = require('mongoose');
 const { defaultMaxListeners } = require('nodemailer/lib/xoauth2');
-const RoleModel = mongoose.model('role');
 
 // Middleware function for authorization
-exports.authorize = (model, permission) => async (req, res, next) => {
+exports.authorize = (permissionRoles) => async (req, res, next) => {
+  console.log("authorize");
   const token = req.headers.authorization;
 
   // Check if the token exists
@@ -18,12 +18,12 @@ exports.authorize = (model, permission) => async (req, res, next) => {
     const [bearerPrefix, actualToken] = token.split(' ');
     const decoded = JWT.verify(actualToken, process.env.JWT_SECRET);
     // Access the id and roleName from the decoded token
-    const { id, roleName } = decoded;
+    const { id, role } = decoded;
     
 
     // Attach the id and roleName to the request object for further use
     req.userId = id;
-    req.roleName = roleName;
+    req.role = role;
  
     // Continue to the next middleware or route handler
   
@@ -33,27 +33,11 @@ exports.authorize = (model, permission) => async (req, res, next) => {
   }
 
   try {
-    const roleName = req.roleName; // Assuming you have the user's role ID in the request
-   
-    
-    if (roleName === "driver") {
-      const driver_id = Number(req.headers.driver_id);
-      if (driver_id === req.userId) {
-        
-        // User is authorized to access the endpoint
-        next();
-        
-        return; // Stop execution here and don't proceed to the subsequent code
-      } else {
-        res.status(403).json({ error: 'Unauthorized' });
-        return; // Stop execution here and don't proceed to the subsequent code
-      }
-    }
-    
-    const role = await RoleModel.findOne({ name: roleName });
+    const role = req.role; // Assuming you have the user's role ID in the request
 
+    console.log(role,permissionRoles )
     // Check if the user has permissions for the specific model and permission
-    if (role && role.permissions[model] && role.permissions[model][permission]) {
+    if (role === 'admin' || permissionRoles.includes(role)) {
       // User is authorized to access the endpoint
       next();
     } else {

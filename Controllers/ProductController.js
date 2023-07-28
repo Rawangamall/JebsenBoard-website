@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 require("../Models/ProductModel");
 require("../Models/CategoryModel");
 
- const AppError = require("./../utils/appError");
+const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 const { paginateSubDocs } = require("mongoose-paginate-v2");
 
@@ -34,12 +34,11 @@ exports.addProduct = catchAsync(async (request, response, next) => {
     const category = await CategorySchema.findById(category_id);
 
 		if (!category) {
-			return response.status(404).json({ error: "category not found" });
+			return next(new AppError(`Category not found`, 401));
 		}
 
   
     const Product = new ProductSchema({
-      _id: request.body.id,
       'name.en': request.body.name,
       'name.ar': request.body.name_ar,
       'description.en': request.body.description,
@@ -75,10 +74,10 @@ exports.getProduct = catchAsync(async (req, res, next) => {
 }
 );
 
-exports.updateProduct = catchAsync(async (req, res, next) => {
+exports.updateProduct = catchAsync(async (request, res, next) => {
  
-    const id = req.params.id;
-    const updateData = req.body;
+    const id = request.params.id;
+   
 
     const category_id = request.body.category_id;
     if(category_id)
@@ -86,18 +85,35 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
        const category = await CategorySchema.findById(category_id);
 
         if (!category) {
-          return response.status(404).json({ error: "category not found" });
+          return next(new AppError("category not found", 404));
         }
     }
   
-    const updatedDocument = await ProductSchema.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
+    const product = await ProductSchema.findByIdAndUpdate(id, {
+      'name.en': request.body.name,
+      'name.ar': request.body.name_ar,
+      'description.en': request.body.description,
+      'description.ar': request.body.description_ar,
+      'height.en': request.body.height,
+      'height.ar': request.body.height_ar,
+      'depth.en': request.body.depth,
+      'depth.ar': request.body.depth_ar,
+      'material.en': request.body.material,
+      'material.ar': request.body.material_ar,
+      'price.en': request.body.price,
+      'price.ar': request.body.price_ar,
+      category_id: request.body.category_id,
+      main_image: request.body.main_image,
+      slideshow_images: request.body.slideshow_images
+    });
+
+    if (!product) {
+      return next(new AppError("No record found ", 404));
+    }
+  
+    res.status(200).json(product);
      
-    res.status(200).json(updatedDocument);
-      
+    
   }
 );
 
@@ -106,7 +122,7 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
   
   const product = await ProductSchema.findById(ObjectId);
   if (!product) {
-    return res.status(404).json({ error: "No record found with that ID" });
+    return next(new AppError("No record found ", 404)); 
   }
 
   

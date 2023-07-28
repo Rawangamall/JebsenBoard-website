@@ -91,6 +91,10 @@ exports.addUser = CatchAsync(async (request, response, next) => {
 
 exports.getUser = CatchAsync(async (request, response, next) => {
 
+  const userId = request.userId;
+  const role = request.role;
+  const tokenId = await UserSchema.findById(userId)
+
   const id = request.params._id;
   const lang = request.headers.lang || "en";
 
@@ -112,6 +116,10 @@ exports.getUser = CatchAsync(async (request, response, next) => {
   }
 
   const user = await UserSchema.findById(id).select(projection)
+
+  if( tokenId != id){
+    return next(new AppError(`You are not authorized to perform this action`, 401));
+  }
 
   if(!user){
     return next(new AppError(`User not found`, 401));

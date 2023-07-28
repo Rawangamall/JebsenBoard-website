@@ -4,18 +4,18 @@ const router=express.Router();
 const ProductController=require("./../Controllers/ProductController");
 const validationData = require("./../Core/Validations/Product")
 const AuthenticationMW = require("./../Middlewares/authenticationMW")
-// const AuthorizationMW = require("./../Middlewares/authorizationMW")
+const AuthorizationMW = require("./../Middlewares/authorizationMW")
 const validationMW = require("./../Core/Validations/validateMW")
 
 
 router.route("/products")
-        .get(AuthenticationMW.auth ,validationMW,ProductController.getAll)
-       .post(AuthenticationMW.auth,validationData.ProductValidPOST,validationMW ,ProductController.addProduct) 
+        .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin") ,validationMW,ProductController.getAll)
+       .post(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),validationData.ProductValidPOST,validationMW ,ProductController.addProduct) 
 
 router.route("/products/:id")
-        .get(AuthenticationMW.auth ,ProductController.getProduct)
-        .patch(AuthenticationMW.auth,validationMW, ProductController.updateProduct)
-        .delete(AuthenticationMW.auth,validationMW ,ProductController.deleteProduct)
+        .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),ProductController.getProduct)
+        .patch(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),validationMW, ProductController.updateProduct)
+        .delete(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),validationMW ,ProductController.deleteProduct)
 
 router.route("/product/category")
       .get(ProductController.getProductsCategory)
