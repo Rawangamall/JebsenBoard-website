@@ -13,6 +13,8 @@ const CategorySchema = mongoose.model("category");
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  const lang = req.headers.lang || "en";
+
 
   const options = {
     page,
@@ -65,10 +67,13 @@ exports.addProduct = catchAsync(async (request, response, next) => {
 
 exports.getProduct = catchAsync(async (req, res, next) => {
   const product = await ProductSchema.findById(req.params.id);
+  if(!product) return next(new AppError('No product found', 404))
+  const ProductsCategory = await CategorySchema.findById(product.category_id).limit(3);
   res.status(200).json({
     status: "success",
     data: {
-      product
+      product : product,
+      ProductsCategory : ProductsCategory
     }
   });
 }

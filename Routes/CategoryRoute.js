@@ -6,16 +6,18 @@ const validationData = require("./../Core/Validations/Category")
 const AuthenticationMW = require("./../Middlewares/authenticationMW")
 // const AuthorizationMW = require("./../Middlewares/authorizationMW")
 const validationMW = require("./../Core/Validations/validateMW")
+const imageValidation = require("./../Core/Validations/imageValidations")
 
 
-router.route("/categories")
+
+router.route("/category")
         .get(CategoryController.getAll)
-       .post(AuthenticationMW.auth,validationData.CategoryValidPOST,validationMW ,CategoryController.addCategory) 
+       .post(AuthenticationMW.auth,validationMW,imageValidation.addIMG ,CategoryController.addCategory)// validationData.CategoryValidPOST
 
-router.route("/categories/:id")
+router.route("/category/:id")
         .get(CategoryController.getCategory)
         .patch(AuthenticationMW.auth,validationMW, CategoryController.updateCategory)
-        .delete(AuthenticationMW.auth,validationMW ,CategoryController.deleteCategory)
+        .delete(AuthenticationMW.auth,validationMW ,imageValidation.removeCategoryIMG,CategoryController.deleteCategory)
 
 
 module.exports=router;
