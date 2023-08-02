@@ -5,9 +5,11 @@ const mongoose=require("mongoose");
 
 require("./../../Models/UserModel")
 require("./../../Models/CategoryModel")
+require("./../../Models/ProductModel")
 
 const UserSchema=mongoose.model("user");
 const CategorySchema=mongoose.model("category");
+const ProductSchema=mongoose.model("product");
 
 const AppError = require("./../../utils/appError");
 
@@ -39,25 +41,28 @@ exports.addIMG = multer({
             }
 
         } , 
-        filename:(request, file, cb)=>{
+        filename:async (request, file, cb)=>{
+           try{
+
+           
            
             var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
+            var imageName;
+
 
           if(fullUrl.includes("user")){
                 userId = request.params._id;
                 imageName = userId + "." + "jpg";
-          }else if(fullUrl.includes("category")){
-                categoryName = request.body.name;
-                imageName = categoryName + "." + "jpg";
-               
-            }else if(fullUrl.includes("product")){
-                productName = request.body.category_id + request.body.name;
-                request.image = imageName
-                imageName = productName + "." + "jpg";
+          }
+       
+        cb(null, imageName);
+        next();
+
+        }catch(err){
+            console.log(err); 
             }
-                cb(null, imageName);
-            
          }
+
     })
 }).single("image")
 
@@ -69,8 +74,7 @@ exports.removeUserIMG=function(req,res,next){
         fs.unlink(path.join(__dirname,"..","images","User",imageName), function (err) {
             if (err)
                 next(new Error("User not found"));
-            else
-                next();
+           
         })
     }
     next();
@@ -78,18 +82,140 @@ exports.removeUserIMG=function(req,res,next){
 }
 
 exports.removeCategoryIMG=function(req,res,next){
-    CategorySchema.findOne({_id:req.params._id}).then((data)=>{
+    CategorySchema.findOne({_id:req.params.id}).then((data)=>{
         if(data != null && data.image != "default.jpg"){
-        imageName = data.name+ "." + "jpg";
-        // imageName = data.image;
-
+        imageName = data.image;
         fs.unlink(path.join(__dirname,"..","images","Category",imageName), function (err) {
             if (err)
                 next(new Error("Category not found"));
-            else
-                next();
         })
     }
     next();
     })
 }
+exports.removeProductIMG=function(req,res,next){
+    ProductSchema.findOne({_id:req.params.id}).then((data)=>{
+        if(data != null && data.image != "default.jpg"){
+        imageName = data.image;
+        fs.unlink(path.join(__dirname,"..","images","Product",imageName), function (err) {
+            if (err)
+                next(new Error("product not found"));
+        })
+    }
+    next();
+    })
+}
+
+
+exports.categoryImageUpload = multer({
+    fileFilter: function (req, file, cb) {
+      if (
+        file.mimetype != "image/png" &&
+        file.mimetype != "image/jpg" &&
+        file.mimetype != "image/jpeg"
+      ) {
+        return cb(new Error("Only images are allowed"));
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 10000 * 10000 },
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, "..", "images", "Category"));
+      },
+      filename: async (request, file, cb) => {
+        try {
+          const categoryId = request.params.id;
+          var imageName ;
+          var changeName = request.body.name; 
+          
+
+          const category = await CategorySchema.findById(categoryId);
+          if (!category) {
+            imageName = request.body.name + "." + "jpg";
+          }
+          else{
+            const existingImage = category.image;
+          
+          if(! changeName && file){
+            imageName = category.name.en + "." + "jpg";
+            }
+          // Remove the existing image if it's not the default image
+          if (changeName && existingImage && existingImage !== "default.jpg") {
+            fs.unlink(path.join(__dirname, "..", "images", "Category", existingImage), (err) => {
+              if (err) {
+                console.error(err);
+              } else {
+                console.log("Existing file deleted successfully");
+              }
+            });
+            imageName = request.body.name + "." + "jpg";
+          }
+        }
+        //   const imageName = categoryName ;
+          console.log("newimageName", imageName);
+          cb(null, imageName);
+        } catch (err) {
+          console.error(err);
+          cb(err);
+        }
+      },
+    }),
+  }).single("image");
+
+  
+exports.productImageUpload = multer({
+    fileFilter: function (req, file, cb) {
+      if (
+        file.mimetype != "image/png" &&
+        file.mimetype != "image/jpg" &&
+        file.mimetype != "image/jpeg"
+      ) {
+        return cb(new Error("Only images are allowed"));
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 10000 * 10000 },
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, "..", "images", "Product"));
+      },
+      filename: async (request, file, cb) => {
+        try {
+          const productId = request.params.id;
+          var imageName ;
+          var changeName = request.body.name; 
+          
+
+          const product = await ProductSchema.findById(productId);
+          if (!product) {
+            imageName = request.body.name + "." + "jpg";
+          }
+          else{
+            const existingImage = product.image;
+          
+          if(! changeName && file){
+            imageName = product.name.en + "." + "jpg";
+            }
+          // Remove the existing image if it's not the default image
+          if (changeName && existingImage && existingImage !== "default.jpg") {
+            fs.unlink(path.join(__dirname, "..", "images", "Product", existingImage), (err) => {
+              if (err) {
+                console.error(err);
+              } else {
+                console.log("Existing file deleted successfully");
+              }
+            });
+            imageName = request.body.name + "." + "jpg";
+          }
+        }
+        //   const imageName = categoryName ;
+          console.log("newimageName", imageName);
+          cb(null, imageName);
+        } catch (err) {
+          console.error(err);
+          cb(err);
+        }
+      },
+    }),
+  }).single("image");

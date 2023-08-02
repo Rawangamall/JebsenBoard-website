@@ -12,12 +12,12 @@ const Schema = new mongoose.Schema(
         ar: String
       },
       height: {
-        en: String,
+        en:  Number,
         ar: String
       }
       ,
       depth:{
-        en: String,
+        en: Number,
         ar: String
       }
       ,
@@ -25,6 +25,12 @@ const Schema = new mongoose.Schema(
         en: String,
         ar: String
       },
+      style:
+      {
+        en: String,
+        ar: String
+      },  
+
       price: {
         en: Number,
         ar: String
@@ -33,11 +39,8 @@ const Schema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category'
       },
-      main_image: { type: String, default: "default.jpg"},
-      slideshow_images:
-        [
-          { type: String }
-        ]
+      image: { type: String, default: "default.jpg"}
+     
     },
     { timestamps: true }
   );

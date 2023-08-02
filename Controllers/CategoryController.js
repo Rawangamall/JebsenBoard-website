@@ -6,6 +6,9 @@ const catchAsync = require("./../utils/CatchAsync");
 
 const CategorySchema = mongoose.model("category");
 const ProductSchema = mongoose.model("product");
+const path=require("path");
+const fs = require('fs');
+
 
 exports.getAll = catchAsync(async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
@@ -31,6 +34,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
         _id: 1,
         name: 1,
         description: 1,
+        image: 1,
         // Add other fields from your CategorySchema that you want to include
         productCount: { $size: '$products' }
       }
@@ -79,18 +83,46 @@ exports.getAll = catchAsync(async (req, res, next) => {
 exports.updateCategory = catchAsync(async (req, res, next) => {
  
     const id = req.params.id;
+    const category = await CategorySchema.findById(id);
+    if(!category) return next(new AppError('No category found', 404))
+    console.log("category",category);
+    const imageExist = req.file || "undefined";
+    if(req.body.name && imageExist == "undefined")
+    {
+      const previousFileName =  category.image;
+      const newFileName = req.body.name+".jpg";
+      const directoryPath = path.join(__dirname,"..","Core","images","Category"); // Change this to your image upload directory
 
-   
-    const updatedDocument = await CategorySchema.findByIdAndUpdate(
-      id,
-      
-      { 'name.en': req.body.name,
-        'name.ar': req.body.name_ar,
-        image: req.body.image }
-      ,
-      { new: true }
-    );
-    if(!updatedDocument) return next(new AppError('No category found', 404))
+      const previousFilePath = path.join(directoryPath, previousFileName);
+      const newFilePath = path.join(directoryPath, newFileName);
+
+       fs.rename(previousFilePath, newFilePath, (err) => {    
+         if (err) {
+                console.error('Error renaming the image:', err);
+          } else {
+                console.log('Image file renamed successfully!');
+                }});
+    }
+
+    if(req.body.name)
+    {
+      category.name.en = req.body.name;
+      category.image = req.body.name+".jpg";
+    }
+    if(req.body.name_ar)
+    {
+      category.name.ar = req.body.name_ar;
+    }
+    if(req.file)
+    {
+      console.log(req.body.name || category.name.en);
+      image= req.body.name || category.name.en;
+      category.image =image+".jpg";
+    }
+
+
+    const updatedDocument = await category.save();
+
      
     res.status(200).json(updatedDocument);
      
@@ -105,7 +137,7 @@ exports.deleteCategory = catchAsync(async (req, res, next) => {
   console.log(deleted);
   if(!deleted) return next(new AppError('No category found', 404))
   
-  res.status(200).json(deleted);
+  res.status(200).json("deleted");
 }
 );
 
