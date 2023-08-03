@@ -11,6 +11,7 @@ const CategorySchema = mongoose.model("category");
 
 const path=require("path");
 const fs = require('fs');
+const { type } = require("os");
 
  exports.getAll = catchAsync(async (req, res, next) => {
 
@@ -174,47 +175,44 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
 
 exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
-  const categoryID = request.query.categoryID;
   const lang = request.headers.lang || "en";
-
-  //sort
+  const categoryID = request.query.categoryID;
   const sort = request.query.sort || "newest";
 
   //range of category
-  //const maxHeightRange = await ProductSchema.findOne().sort({'height.en':-1}).select('height.en')
+  const maxHeightRange = await ProductSchema.findOne().sort({'height.en':-1}).select('height.en')
+  const maxDepthRange = await ProductSchema.findOne().sort({'depth.en':-1}).select('depth.en')
+  const minHeightRange = await ProductSchema.findOne().sort({'height.en':1}).select('height.en')
+  const minDepthRange = await ProductSchema.findOne().sort({'depth.en':1}).select('depth.en')
 
   //filters in eng only
-  const minDepth = request.query.minDepth || 0;
-  const maxDepth = request.query.maxDepth || Number.MAX_SAFE_INT;
-  const minHeight = request.query.minHeight || 0;
-  const maxHeight = request.query.maxHeight || Number.MAX_SAFE_INT;
+  const minDepth = request.query.minDepth || minDepthRange.depth.en;
+  const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
+  const minHeight = request.query.minHeight || minHeightRange.height.en;
+  const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
+  const style = request.query.style || ""
+  const style_ar = request.query.style_ar || ""
 
   let query = {
     category_id: categoryID,
-    [`height.en`]: { $regex: /^[0-9]+/, $gte: parseInt(minHeight), $lte: parseInt(maxHeight) } , 
-    [`depth.en`]: { $regex: /^[0-9]+/, $gte: parseInt(minDepth), $lte: parseInt(maxDepth) }
+     [`height.en`]: { $gte: parseInt(minHeight), $lte: parseInt(maxHeight) } , 
+     [`depth.en`]: { $gte: parseInt(minDepth), $lte: parseInt(maxDepth) } ,
+     $or: [
+      { "style.en" : style },
+      { "style.ar" : style_ar },
+    ]
   };
 
-  let projection = {
-    "main_image": 1,
-    "slideshow_images": 1,
+  const projection = {
+     image: 1,
+    [`price.${lang}`]: 1,
+    [`description.${lang}`]: 1,
+    [`name.${lang}`]: 1,
+    [`material.${lang}`]: 1,
+    [`height.${lang}`]: 1,
+    [`depth.${lang}`]: 1,
+    [`style.${lang}`]: 1,
   };
-  
-  if (lang === "en") {
-    projection["price.en"] = 1;
-    projection["description.en"] = 1;
-    projection["name.en"] = 1;
-    projection["material.en"] = 1;
-    projection["height.en"] = 1;
-    projection["depth.en"] = 1;
-  } else {
-    projection["price.ar"] = 1;
-    projection["description.ar"] = 1;
-    projection["name.ar"] = 1;
-    projection["material.ar"] = 1;
-    projection["height.ar"] = 1;
-    projection["depth.ar"] = 1;
-  }
 
   let sortObj = {};
   switch (sort) {
@@ -242,7 +240,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   };
 
   const data = await ProductSchema.paginate(query, options);  
-  response.status(200).json({data,maxHeightRange});
+  const metadata = {maxHeight, maxDepth, minHeight, minDepth };
+  response.status(200).json({data,metadata});
 });
  
 
