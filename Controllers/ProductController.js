@@ -43,6 +43,7 @@ exports.addProduct = catchAsync(async (request, response, next) => {
 			return next(new AppError(`Category not found`, 401));
 		}
 
+    console.log(category.letter.en)
   
     const Product = new ProductSchema({
       'name.en': request.body.name,

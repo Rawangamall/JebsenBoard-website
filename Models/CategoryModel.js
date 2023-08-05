@@ -10,8 +10,14 @@ const categorySchema = new mongoose.Schema(
       ar: String
     },
     image: String
-  },
+  ,
+    letter: {   
+      en: {type: String , unique:true},
+      ar: {type: String , unique:true}
+    }
+    } ,
   { timestamps: true }
+
 );
 
 
