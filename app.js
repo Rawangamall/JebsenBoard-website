@@ -39,7 +39,7 @@ server.use(express.json());
 server.use(express.urlencoded({extended:false}));
 server.use(bodyParser.json())
 
-server.use('user/image', express.static(path.join(__dirname, 'Core/images/User')));
+server.use('image', express.static(path.join(__dirname, 'Core/images')));
 
 //Routes 
 server.use(LoginRoute)
