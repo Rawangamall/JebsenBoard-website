@@ -46,7 +46,9 @@ exports.forgetpassword = catchAsync(async (req,res,next)=>{
     const resetToken = await user.createPasswordRandomToken()
     await user.save({validateBeforeSave : false });
 
-    const resetLink = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
+    const resetLink = `${req.protocol}://localhost:8081/resetpassword/${resetToken}`; 
+     //${req.get('host')}
+    console.log(resetLink)
     const message = `<p>Hi ${user.firstName.en},</p>
       <p>Forgot your password? No worries, we’ve got you covered.</p>
       <p>Click on the button below to reset your password:</p>

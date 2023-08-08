@@ -20,10 +20,9 @@ router.route("/product/search")
       .get(ProductController.searchProducts)
 
 router.route("/product/:id")
-        .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),ProductController.getProduct)
-        .patch(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),validationMW,productImageUpload, ProductController.updateProduct)
-        .delete(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),validationMW ,removeProductIMG,ProductController.deleteProduct)
-
+      .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),ProductController.getProduct)
+      .patch(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),validationMW,productImageUpload, ProductController.updateProduct)
+      .delete(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),validationMW ,removeProductIMG,ProductController.deleteProduct)
 
 
 module.exports=router;

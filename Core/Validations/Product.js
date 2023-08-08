@@ -14,11 +14,10 @@ exports.ProductValidPOST = [
   body("material").optional().isString().withMessage("The material should be string"),
   body("material_ar").optional().isString().withMessage("The material should be string"),
   body("depth").optional().isNumeric().withMessage("The depth should be integer"),
-  body("depth_ar").optional().isNumeric().withMessage("The depth should be string"),
+  body("depth_ar").optional().isString().withMessage("The depth should be string"),
   body("height").optional().isNumeric().withMessage("The height should be integer"),
-  body("height_ar").optional().isNumeric().withMessage("The height should be string"),
+  body("height_ar").optional().isString().withMessage("The height should be string"),
   body("image").notEmpty().isString().withMessage("The number should be an integer")
-
 
 ];
 
