@@ -24,6 +24,9 @@ exports.login = catchAsync(async (req,res,next)=>{
 
 const user = await UserSchema.findOne({email:email}).select("+password");
 
+// const user = ` SELECT * FROM users
+// WHERE email = '${email}' LIMIT 1`;
+
 if(!user || !(await user.correctPassword(password, user.password))){
     return next(new AppError(`Incorrect email or password`, 401));
 }
@@ -47,7 +50,7 @@ exports.forgetpassword = catchAsync(async (req,res,next)=>{
     await user.save({validateBeforeSave : false });
 
     const resetLink = `${req.protocol}://localhost:8081/resetpassword/${resetToken}`; 
-     //${req.get('host')}
+    
     console.log(resetLink)
     const message = `<p>Hi ${user.firstName.en},</p>
       <p>Forgot your password? No worries, we’ve got you covered.</p>

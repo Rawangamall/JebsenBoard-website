@@ -1,15 +1,6 @@
 const multer=require("multer");
 const path=require("path");
 const fs = require('fs');
-const mongoose=require("mongoose");
-
-require("./../../Models/UserModel")
-require("./../../Models/CategoryModel")
-require("./../../Models/ProductModel")
-
-const UserSchema=mongoose.model("user");
-const CategorySchema=mongoose.model("category");
-const ProductSchema=mongoose.model("product");
 
 const AppError = require("./../../utils/appError");
 
@@ -43,8 +34,6 @@ exports.addIMG = multer({
         } , 
         filename:async (request, file, cb)=>{
            try{
-
-           
            
             var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
             var imageName;
@@ -53,11 +42,10 @@ exports.addIMG = multer({
           if(fullUrl.includes("user")){
                 userId = request.params._id;
                 imageName = userId + "." + "jpg";
+                request.imageName = imageName
           }
        
         cb(null, imageName);
-        next();
-
         }catch(err){
             console.log(err); 
             }

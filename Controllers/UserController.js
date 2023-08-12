@@ -1,7 +1,6 @@
-const mongoose = require("mongoose");
-require("./../Models/UserModel");
-const UserSchema = mongoose.model("user");
+const User = require("./../Models/UserModel");
 
+const { Op } = require('sequelize');
 const bcrypt = require("bcrypt");
 const CatchAsync = require("../utils/CatchAsync");
 const AppError = require("../utils/appError");
@@ -12,119 +11,99 @@ const salt = bcrypt.genSaltSync(saltRounds);
 exports.addUser = CatchAsync(async (request, response, next) => {
 
     const hash = await bcrypt.hash(request.body.password, salt);
-      const user = new UserSchema({
-        'firstName.en': request.body.firstName,
-        'firstName.ar': request.body.firstName_ar,
-        'lastName.en': request.body.lastName,
-        'lastName.ar': request.body.lastName_ar,
-        email: request.body.email,
-        password: hash,
-        image:"default.jpg",
-        'phoneNumber.en': request.body.phoneNumber,
-        'phoneNumber.ar': request.body.phoneNumber_ar,
-        'role.en': request.body.role,
-        'role.ar': request.body.role_ar
+
+    const newUser = await User.create({
+      multilingualData: {
+        en: {
+          firstName:request.body.firstName,
+          lastName:request.body.lastName,
+          phoneNumber:request.body.phoneNumber ,
+          role:request.body.role
+        },
+        ar: {
+          firstName:request.body.firstName_ar,
+          lastName:request.body.lastName_ar,
+          phoneNumber:request.body.phoneNumber_ar ,
+          role:request.body.role_ar
+        },
+      },
+      email: request.body.email,
+      password:hash,
+      image:"default.jpg"
+    });
+
+      response.status(201).json(newUser);
+  });
+
+  
+  exports.getAllUsers = CatchAsync(async (request, response, next) => {
+
+      const page = parseInt(request.query.page) || 1;
+      const limit = parseInt(request.query.limit) || 10;
+      const lang = request.headers.lang || "ar";
+      const searchKey = request.query.searchkey || "";
+  
+      const whereClause = searchKey ? {
+        [Op.or]: [
+          { 'multilingualData.en.firstName': { [Op.like]: `%${searchKey}%` } },
+          { 'multilingualData.en.lastName': { [Op.like]: `%${searchKey}%` } },
+          { 'multilingualData.ar.firstName': { [Op.like]: `%${searchKey}%` } },
+          { 'multilingualData.ar.lastName': { [Op.like]: `%${searchKey}%` } },
+          { email: { [Op.like]: `%${searchKey}%` } },
+        ],
+      } : {};
+  
+      const offset = (page - 1) * limit;
+      
+      const attributes = ['id', 'multilingualData', 'email', 'image', 'updatedAt', 'createdAt'];
+  
+      const users = await User.findAll({
+        where: whereClause,
+        attributes,
+        limit,
+        offset,
       });
   
-      const data = await user.save();
-      response.status(201).json(data);
- 
+      const usersWithTranslations = users.map(user => {
+        const { multilingualData, ...userData } = user.toJSON();
+        const { firstName, lastName, phoneNumber, role } = lang === 'en' ? multilingualData.en : multilingualData.ar;
     
-  });
+        return {
+          firstName,
+          lastName,
+          phoneNumber,
+          role,
+          ...userData,
+        };
+      });
 
-  exports.getallUsers = CatchAsync(async (request, response, next) => {
-    
-    const page = parseInt(request.query.page) || 1;
-    const limit = parseInt(request.query.limit) || 10;
-    const lang = request.headers.lang || "en";
-    const searchKey = request.query.searchkey || "";
-
-    let query = {};
-
-    if (searchKey) {
-      const objectId = mongoose.Types.ObjectId.isValid(searchKey)
-      ? mongoose.Types.ObjectId(searchKey)
-      : null;
-    
-      const regexSearchKey = new RegExp(searchKey, "i");
-      query = {
-          
-            $or: [
-              { _id: objectId },
-              { 'firstName.en': regexSearchKey },
-              { 'lastName.en': regexSearchKey },
-              { 'firstName.ar': regexSearchKey },
-              { 'lastName.ar': regexSearchKey },
-              { email: regexSearchKey },
-            ],
-          
-      };
-    }
-
-    let projection = {
-      "image": 1,
-      "email": 1,
-    };
-    
-    if (lang === "en") {
-      projection["firstName.en"] = 1;
-      projection["lastName.en"] = 1;
-      projection["role.en"] = 1;
-      projection["phoneNumber.en"] = 1;
-    } else {
-      projection["firstName.ar"] = 1;
-      projection["lastName.ar"] = 1;
-      projection["role.ar"] = 1;
-      projection["phoneNumber.ar"] = 1;
-    }
-
-    const options = {
-      page,
-      limit,
-      select: projection 
-    };
-  
-    const result = await UserSchema.paginate(query, options);
-  
-    response.status(200).json(result);
-  });
+      response.status(200).json(usersWithTranslations);
+  }
+);
 
 exports.getUser = CatchAsync(async (request, response, next) => {
 
-  const userId = request.userId;
-  const role = request.role;
-  const tokenId = await UserSchema.findById(userId)
-
   const id = request.params._id;
-  const lang = request.headers.lang || "en";
+  const lang = request.headers.lang || "ar";
 
-  let projection = {
-    "image": 1,
-    "email": 1,
-  };
-  
-  if (lang === "en") {
-    projection["firstName.en"] = 1;
-    projection["lastName.en"] = 1;
-    projection["role.en"] = 1;
-    projection["phoneNumber.en"] = 1;
-  } else {
-    projection["firstName.ar"] = 1;
-    projection["lastName.ar"] = 1;
-    projection["role.ar"] = 1;
-    projection["phoneNumber.ar"] = 1;
-  }
+  const attributes = ['id', 'multilingualData', 'email', 'image', 'updatedAt', 'createdAt'];
+  const data = await User.findByPk(id, { attributes });
 
-  const user = await UserSchema.findById(id).select(projection)
-
-  if( tokenId != id){
-    return next(new AppError(`You are not authorized to perform this action`, 401));
-  }
-
-  if(!user){
+  if(!data){
     return next(new AppError(`User not found`, 401));
   }
-    
+
+  const { multilingualData, ...userData } = data.toJSON();
+  const { firstName, lastName, phoneNumber, role } = lang === 'en' ? multilingualData.en : multilingualData.ar;
+  
+  const user = {
+    ...userData,
+    firstName,
+    lastName,
+    phoneNumber,
+    role,
+  };
+
   response.status(200).json(user);
      
   });
@@ -138,33 +117,40 @@ exports.getUser = CatchAsync(async (request, response, next) => {
       request.body.password = hash;
     }
   
-    const user = await UserSchema.findByIdAndUpdate(id, {
-      'firstName.en': request.body.firstName,
-      'firstName.ar': request.body.firstName_ar,
-      'lastName.en': request.body.lastName,
-      'lastName.ar': request.body.lastName_ar,
-      email: request.body.email,
-      password: request.body.password,
-      'phoneNumber.en': request.body.phoneNumber,
-      'phoneNumber.ar': request.body.phoneNumber_ar,
-      'role.en': request.body.role,
-      'role.ar': request.body.role_ar,
-    });
+    const user = await User.findByPk(id);
 
     if(!user){
       return next(new AppError(`User not found`, 401));
     }
+
+    const Updateduser = await user.update({
+      'multilingualData.en.firstName': request.body.firstName,
+      'multilingualData.ar.firstName.ar': request.body.firstName_ar,
+      'multilingualData.en.lastName': request.body.lastName,
+      'multilingualData.ar.lastName': request.body.lastName_ar,
+      email: request.body.email,
+      password: request.body.password,
+      'multilingualData.en.phoneNumber': request.body.phoneNumber,
+      'multilingualData.ar.phoneNumber': request.body.phoneNumber_ar,
+      'multilingualData.en.role': request.body.role,
+      'multilingualData.ar.role': request.body.role_ar,
+      image : request.imageName
+    });
+
     
-    response.status(200).json(user);
+    response.status(200).json(Updateduser);
   });
   
 exports.delUser = CatchAsync(async (request, response, next) => {
   const id = request.params._id;
-  const user = await UserSchema.findByIdAndDelete(id);
 
-  if(!user){
+  const user = await User.findByPk(id);
+
+  if (!user) {
     return next(new AppError(`User not found`, 401));
   }
-  
-  response.status(200).json(user);
+
+  await user.destroy();
+
+  response.status(200).json({ message: 'User deleted successfully' });  
 }); 

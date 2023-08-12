@@ -1,38 +1,31 @@
 const express= require("express");
 const cors = require("cors");
 const morgan = require("morgan");
-const path=require("path");
-const mongoose=require("mongoose");
+const sequelize = require('./utils/dbConfig');
+const path=require("path"); 
 var bodyParser = require('body-parser')
 require("dotenv").config({ path: "config.env" });
 
-const LoginRoute = require("./Routes/LoginRoute");
+//const LoginRoute = require("./Routes/LoginRoute");
 const UserRoute = require("./Routes/UserRoute");
-const ProductRoute = require("./Routes/ProductRoute");
-const CategoryRoute = require("./Routes/CategoryRoute");
+// const ProductRoute = require("./Routes/ProductRoute");
+// const CategoryRoute = require("./Routes/CategoryRoute");
 
 //server
 const server = express();
-let port=process.env.PORT||8080;
+let port= process.env.PORT||8080;
+server.listen(port,()=>{
+    console.log("server is listenng.....",port);
+});
 
 //db connection
-const db = process.env.DATABASE
-
-mongoose.set('strictQuery', true);  //warning
-//mongoose.set('debug', true);
- mongoose.connect(db,{
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
- })
-        .then(()=>{
-            console.log("DB connected");
-            server.listen(port,()=>{
-                console.log("server is listenng.....",port);
-            });
-        })
-        .catch(error=>{
-            console.log("Db Problem "+error);
-        })
+sequelize.sync({ force: false }) 
+  .then(() => {
+    console.log('Database synced');
+  })
+  .catch(err => {
+    console.error('Error syncing database:', err);
+  });
 
 //body parse
 server.use(express.json());
@@ -42,10 +35,10 @@ server.use(bodyParser.json())
 server.use('image', express.static(path.join(__dirname, 'Core/images')));
 
 //Routes 
-server.use(LoginRoute)
+//server.use(LoginRoute)
 server.use(UserRoute)
-server.use(ProductRoute)
-server.use(CategoryRoute)
+// server.use(ProductRoute)
+// server.use(CategoryRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {
