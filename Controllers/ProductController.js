@@ -178,6 +178,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
   const lang = request.headers.lang || "en";
   const categoryID = request.query.categoryID;
+  console.log(categoryID)
   const sort = request.query.sort || "newest";
 
   //range of category
@@ -198,11 +199,22 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     category_id: categoryID,
      [`height.en`]: { $gte: parseInt(minHeight), $lte: parseInt(maxHeight) } , 
      [`depth.en`]: { $gte: parseInt(minDepth), $lte: parseInt(maxDepth) } ,
-     $or: [
-      { "style.en" : style },
-      { "style.ar" : style_ar },
-    ]
   };
+
+  let orConditions = [];
+
+if (style) {
+  orConditions.push({ "style.en": style });
+}
+
+if (style_ar) {
+  orConditions.push({ "style.ar": style_ar });
+}
+
+if (orConditions.length > 0) {
+  query.$or = orConditions;
+}
+
 
   const projection = {
      image: 1,
@@ -241,6 +253,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   };
 
   const data = await ProductSchema.paginate(query, options);  
+
   const metadata = {maxHeight, maxDepth, minHeight, minDepth };
   response.status(200).json({data,metadata});
 });

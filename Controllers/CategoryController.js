@@ -52,36 +52,10 @@ exports.getAll = catchAsync(async (req, res, next) => {
 
 
 exports.addCategory = catchAsync(async (request, response, next) => {
-  let isDuplicateLetter = false;
-  let randomLetter;
-
-  do {
-
-    randomLetter = generateRandomLetter();
-
-    const existingCategory = await CategorySchema.findOne({
-      $or: [
-        { 'letter.en': randomLetter.englishLetter },
-        { 'letter.ar': randomLetter.arabicLetter }
-      ]
-
-    });
-
-    if (existingCategory) {
-      isDuplicateLetter = true;
-      randomLetter = generateRandomLetter();
-
-    } else {
-      isDuplicateLetter = false;
-    }
-
-  } while (isDuplicateLetter);
 
   const Category = new CategorySchema({
     'name.en': request.body.name,
     'name.ar': request.body.name_ar,
-    'letter.en': randomLetter.englishLetter,
-    'letter.ar': randomLetter.arabicLetter,
     image: request.body.name + ".jpg"
   });
 
@@ -165,11 +139,3 @@ exports.deleteCategory = catchAsync(async (req, res, next) => {
   res.status(200).json("deleted");
 }
 );
-
-function generateRandomLetter() {
-  const englishAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const randomIndex = Math.floor(Math.random() * englishAlphabet.length);
-  const englishLetter = englishAlphabet[randomIndex];
-  const arabicLetter = String.fromCharCode(englishLetter.charCodeAt(0) + 0x0626 - 0x0041); 
-  return { englishLetter, arabicLetter };
-}
