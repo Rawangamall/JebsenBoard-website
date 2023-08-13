@@ -1,10 +1,9 @@
-const mongoose=require("mongoose");
 const JWT= require("jsonwebtoken");
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 
-require("./../Models/UserModel")
-const UserSchema=mongoose.model("user");
+const User = require("./../Models/UserModel")
 
 
 const AppError = require("./../utils/appError");
@@ -22,17 +21,13 @@ exports.login = catchAsync(async (req,res,next)=>{
     return next(new AppError(` Missing data for login`, 404));
     }
 
-const user = await UserSchema.findOne({email:email}).select("+password");
-
-// const user = ` SELECT * FROM users
-// WHERE email = '${email}' LIMIT 1`;
+    const user = await User.findOne({ where: {email: email}});
 
 if(!user || !(await user.correctPassword(password, user.password))){
     return next(new AppError(`Incorrect email or password`, 401));
 }
 
-
-const token = JWT.sign({id:user._id , role:user.role.en },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
+const token = JWT.sign({id:user._id , role:user.multilingualData.en.role },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
 
 res.status(200).json({
     status:"success" , 
@@ -41,7 +36,9 @@ res.status(200).json({
 });
 
 exports.forgetpassword = catchAsync(async (req,res,next)=>{
-    const user = await UserSchema.findOne({email:req.body.email});
+
+    const user = await User.findOne({ where: {email: req.body.email}});
+
     if(!user){
         return next(new AppError(`User of that email not found`, 401));
     }
@@ -52,7 +49,7 @@ exports.forgetpassword = catchAsync(async (req,res,next)=>{
     const resetLink = `${req.protocol}://localhost:8081/resetpassword/${resetToken}`; 
     
     console.log(resetLink)
-    const message = `<p>Hi ${user.firstName.en},</p>
+    const message = `<p>Hi ${user.multilingualData.en.firstName},</p>
       <p>Forgot your password? No worries, we’ve got you covered.</p>
       <p>Click on the button below to reset your password:</p>
       <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background-color:#007bff;color:#fff;border-radius:5px;text-decoration:none;">Reset Password</a>
@@ -74,21 +71,25 @@ res.status(200).json({ message:"success send email"});
  return next(new AppError("Error sending this email. send it later!",err),500);
 
 }
-
 });
 
 
 exports.resetpassword = catchAsync(async (req,res,next)=>{
-console.log(req.params.code)
+
     if((req.params.code == "") && (req.body.password) == "" && (req.body.confirmPassword) == "") {
         return next(new AppError("Enter valid input"),400);
     }
 
 const hashToken = crypto.createHash('sha256').update(req.params.code).digest('hex');
 
-const user = await UserSchema.findOne({code: hashToken ,
-     passwordResetExpires : {$gt : Date.now()}
-    });
+const user = await User.findOne({
+  where: {
+    code: hashToken,
+    passwordResetExpires: {
+      [Op.gt]: new Date()
+    }
+  }
+});
 
     if(!user){
     return next(new AppError("Code is invalid or expired"),400);

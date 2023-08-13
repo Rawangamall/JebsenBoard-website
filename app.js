@@ -6,7 +6,7 @@ const path=require("path");
 var bodyParser = require('body-parser')
 require("dotenv").config({ path: "config.env" });
 
-//const LoginRoute = require("./Routes/LoginRoute");
+const LoginRoute = require("./Routes/LoginRoute");
 const UserRoute = require("./Routes/UserRoute");
 // const ProductRoute = require("./Routes/ProductRoute");
 // const CategoryRoute = require("./Routes/CategoryRoute");
@@ -35,7 +35,7 @@ server.use(bodyParser.json())
 server.use('image', express.static(path.join(__dirname, 'Core/images')));
 
 //Routes 
-//server.use(LoginRoute)
+server.use(LoginRoute)
 server.use(UserRoute)
 // server.use(ProductRoute)
 // server.use(CategoryRoute)
