@@ -1,27 +1,21 @@
-const mongoose = require("mongoose");
-const mongoosePaginate = require('mongoose-paginate-v2');
 
+const { DataTypes } = require("sequelize");
+const sequelize = require("../utils/dbConfig");
 
-const categorySchema = new mongoose.Schema(
+const Category = sequelize.define(
+  "category",
   {
-   
-    name: {
-      en: String,
-      ar: String
+    multilingualData: {
+      //name,letter [en,ar]
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {},
     },
-    image: String
-  ,
-    letter: {   
-      en: {type: String , unique:true},
-      ar: {type: String , unique:true}
-    }
-    } ,
-  { timestamps: true }
 
+    image: { type: DataTypes.STRING, defaultValue: "default.jpg" },
+  },
+  { timestamps: true }
 );
 
+module.exports = Category;
 
-categorySchema.plugin(mongoosePaginate);
-
-//mapping
-mongoose.model("category", categorySchema);

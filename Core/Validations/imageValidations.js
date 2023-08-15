@@ -116,9 +116,9 @@ exports.categoryImageUpload = multer({
           const categoryId = request.params.id;
           var imageName ;
           var changeName = request.body.name; 
-          
+          const attributes = ['id', 'multilingualData', 'image', 'letter', 'updatedAt', 'createdAt'];
 
-          const category = await CategorySchema.findById(categoryId);
+          const category = await Category.findByPk(id, { attributes });
           if (!category) {
             imageName = request.body.name + "." + "jpg";
           }
@@ -126,7 +126,7 @@ exports.categoryImageUpload = multer({
             const existingImage = category.image;
           
           if(! changeName && file){
-            imageName = category.name.en + "." + "jpg";
+            imageName = category.multilingualData.en.name + "." + "jpg";
             }
           // Remove the existing image if it's not the default image
           if (changeName && existingImage && existingImage !== "default.jpg") {

@@ -9,7 +9,7 @@ require("dotenv").config({ path: "config.env" });
 const LoginRoute = require("./Routes/LoginRoute");
 const UserRoute = require("./Routes/UserRoute");
 // const ProductRoute = require("./Routes/ProductRoute");
-// const CategoryRoute = require("./Routes/CategoryRoute");
+const CategoryRoute = require("./Routes/CategoryRoute");
 
 //server
 const server = express();
@@ -35,10 +35,10 @@ server.use(bodyParser.json())
 server.use('image', express.static(path.join(__dirname, 'Core/images')));
 
 //Routes 
-server.use(LoginRoute)
+// server.use(LoginRoute)
 server.use(UserRoute)
 // server.use(ProductRoute)
-// server.use(CategoryRoute)
+server.use(CategoryRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {
