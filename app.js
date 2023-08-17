@@ -37,8 +37,8 @@ server.use('image', express.static(path.join(__dirname, 'Core/images')));
 //Routes 
 // server.use(LoginRoute)
 server.use(UserRoute)
-// server.use(ProductRoute)
 server.use(CategoryRoute)
+// server.use(ProductRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {

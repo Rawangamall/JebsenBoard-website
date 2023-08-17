@@ -268,9 +268,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   };
 
   const fieldsToSearch = [
-    "name",
-    "material",
-    "description"
+    "name"
   ];
 
   fieldsToSearch.forEach(field => {
