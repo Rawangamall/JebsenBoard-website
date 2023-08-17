@@ -2,7 +2,7 @@ const express=require("express");
 const router=express.Router();
 
 const CategoryController=require("./../Controllers/CategoryController");
-const validationData = require("./../Core/Validations/Category")
+const {CategoryValidPOST} = require("./../Core/Validations/Category")
 const AuthenticationMW = require("./../Middlewares/authenticationMW")
 // const AuthorizationMW = require("./../Middlewares/authorizationMW")
 const validationMW = require("./../Core/Validations/validateMW")

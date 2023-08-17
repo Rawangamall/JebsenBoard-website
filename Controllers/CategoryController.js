@@ -57,23 +57,45 @@ exports.getAll = catchAsync(async (req, res, next) => {
 // });
 
 
+// exports.addCategory = catchAsync(async (request, response, next) => {
+// console.log("categoryyy dataa",request.body);
+// console.log("header",request.headers.test);
+
+//   const newCategory = await Category.create({
+//     multilingualData: {
+//       en: {
+//         'name': request.body.name
+//       },
+//       ar: {
+//         'name': request.body.name_ar
+//       },
+//     },
+//     image: request.body.name + ".jpg"
+//   });
+
+// response.status(201).json(newCategory);
+  
+// });
+
 exports.addCategory = catchAsync(async (request, response, next) => {
-console.log("categoryyy dataa",request.body);
-  const newCategory = await Category.create({
+
+  const newUser = await Category.create({
     multilingualData: {
       en: {
-        'name': request.body.name
+        name:request.body.name,
+       
       },
       ar: {
-        'name': request.body.name_ar
+        name:request.body.name_ar,
       },
     },
-    image: request.body.name + ".jpg"
+    image:"default.jpg"
   });
- 
-  response.status(201).json(newCategory);
-  
+
+    response.status(201).json(newUser);
 });
+ 
+
 
 
  exports.getCategory = catchAsync(async (req, res, next) => {
