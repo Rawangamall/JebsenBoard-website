@@ -2,6 +2,10 @@ const multer=require("multer");
 const path=require("path");
 const fs = require('fs');
 
+const Product = require("./../../Models/ProductModel");
+const Category = require("./../../Models/CategoryModel");
+// delete require.cache[require.resolve('./../../models/ProductModel')];
+
 const AppError = require("./../../utils/appError");
 
 exports.addIMG = multer({
@@ -82,13 +86,28 @@ exports.removeCategoryIMG=function(req,res,next){
     })
 }
 exports.removeProductIMG=function(req,res,next){
-    ProductSchema.findOne({_id:req.params.id}).then((data)=>{
+    Product.findByPk(req.params.id).then((data)=>{
         if(data != null && data.image != "default.jpg"){
         imageName = data.image;
+
+        //check if image is used by other products
+        Product.findAll({
+            where: {
+              'image': imageName
+            }
+          }).then((data)=>{
+            if(data.length == 1){
+
+                //delete image
+
+               
+
         fs.unlink(path.join(__dirname,"..","images","Product",imageName), function (err) {
             if (err)
                 next(new Error("product not found"));
-        })
+        })}
+    })
+
     }
     next();
     })
@@ -170,36 +189,70 @@ exports.productImageUpload = multer({
       },
       filename: async (request, file, cb) => {
         try {
-          const productId = request.params.id;
-          var imageName ;
-          var changeName = request.body.name; 
-          
 
-          const product = await ProductSchema.findById(productId);
-          if (!product) {
-            imageName = request.body.name + "." + "jpg";
-          }
-          else{
+         const imageName = file.originalname;
+         if(request.query.id){
+          const productId = request.query.id;
+          const product = await Product.findByPk(productId);
+          if (product) {
             const existingImage = product.image;
-          
-          if(! changeName && file){
-            imageName = product.name.en + "." + "jpg";
-            }
-          // Remove the existing image if it's not the default image
-          if (changeName && existingImage && existingImage !== "default.jpg") {
-            fs.unlink(path.join(__dirname, "..", "images", "Product", existingImage), (err) => {
-              if (err) {
-                console.error(err);
-              } else {
-                console.log("Existing file deleted successfully");
-              }
-            });
-            imageName = request.body.name + "." + "jpg";
+            // Remove the existing image if it's not the default image
+            if (existingImage && existingImage !== "default.jpg") {
+              console.log("existingImage", existingImage);
+              fs.unlink(path.join(__dirname, "..", "images", "Product", existingImage), (err) => {
+                if (err) {
+                  console.error(err);
+                } else {
+                  console.log("Existing file deleted successfully");
+                }
+              });
+            }}}
+            
+         
+         if(request.body.name){
+         const productNameExist = await Product.findAll({
+          where: {
+            'name': request.body.name
           }
-        }
-        //   const imageName = categoryName ;
-          console.log("newimageName", imageName);
+        });  
+        if(productNameExist.limits > 0){
+          return cb(new Error("Product name already existsss"));
+        }   
+
+      }  
+       
           cb(null, imageName);
+
+        //   const productId = request.params.id;
+        //   // var imageName ;
+        //   var changeName = request.body.name; 
+          
+          
+        //   const product = await Product.findByPK(productId);
+        //   if (!product) {
+        //     imageName = request.body.name !== null ? request.body.name + ".jpg" : file.originalname;
+        //   }
+        //   else{
+        //     const existingImage = product.image;
+          
+        //   if(! changeName && file){
+        //     imageName = product.name.en + "." + "jpg";
+        //     }
+        //   // Remove the existing image if it's not the default image
+        //   if (changeName && existingImage && existingImage !== "default.jpg") {
+        //     fs.unlink(path.join(__dirname, "..", "images", "Product", existingImage), (err) => {
+        //       if (err) {
+        //         console.error(err);
+        //       } else {
+        //         console.log("Existing file deleted successfully");
+        //       }
+        //     });
+        //     imageName = request.body.name + "." + "jpg";
+        //   }
+        // }
+        // //   const imageName = categoryName ;
+        //   console.log("newimageName", imageName);
+        //   cb(null, imageName);
         } catch (err) {
           console.error(err);
           cb(err);

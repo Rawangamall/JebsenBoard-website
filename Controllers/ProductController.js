@@ -1,16 +1,10 @@
-const mongoose = require("mongoose");
-require("../Models/ProductModel");
-require("../Models/CategoryModel");
+const Product = require("../Models/ProductModel");
+const Category = require("../Models/CategoryModel");
+const { Op } = require('sequelize');
 
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
-const { paginateSubDocs } = require("mongoose-paginate-v2");
-
-const ProductSchema = mongoose.model("product");
-const CategorySchema = mongoose.model("category");
-
-const path=require("path");
-const fs = require('fs');
+// const { paginateSubDocs } = require("mongoose-paginate-v2");
 const { type } = require("os");
 
  exports.getAll = catchAsync(async (req, res, next) => {
@@ -37,122 +31,146 @@ const { type } = require("os");
 exports.addProduct = catchAsync(async (request, response, next) => {
 
     const category_id = request.body.category_id;
-    const category = await CategorySchema.findById(category_id);
+    
+    const category = await Category.findByPk(category_id);
 
 		if (!category) {
 			return next(new AppError(`Category not found`, 401));
 		}
 
-    console.log(category.letter.en)
-  
-    const Product = new ProductSchema({
-      'name.en': request.body.name,
-      'name.ar': request.body.name_ar,
-      'description.en': request.body.description,
-      'description.ar': request.body.description_ar,
-      'height.en': request.body.height,
-      'height.ar': request.body.height_ar,
-      'depth.en': request.body.depth,
-      'depth.ar': request.body.depth_ar,
-      'material.en': request.body.material,
-      'material.ar': request.body.material_ar,
-      'price.en': request.body.price,
-      'price.ar': request.body.price_ar,
-      'style.en': request.body.style,
-      'style.ar': request.body.style_ar,
-      category_id: request.body.category_id,
-      image: request.body.image,
-    });
+    //check if the product name is already exist
+    const originalFileName = request.file.originalname; 
+    const fileNameWithoutExtension = originalFileName.replace(/\.[^.]*$/, '');
+    const Name = request.body.name ? request.body.name  : fileNameWithoutExtension;
 
-    console.log(Product);
-    const data = await Product.save();
-    response.status(200).json(data);
+    const productNameExist = await Product.findAll({ where: { name: Name} });
+    console.log("productExist",productNameExist);
+    if (productNameExist.limit > 0)  return next(new AppError(`Product name already exist`, 401));
+
+    const newProduct = await Product.create ({
+      name:Name,
+      multilingualData:{
+        en:{
+          description:request.body.description,
+          height:request.body.height,
+          depth:request.body.depth,
+          material:request.body.material,
+          style:request.body.style,
+          price:request.body.price,
+        },
+        ar:{
+          description:request.body.description_ar,
+          height:request.body.height_ar,
+          depth:request.body.depth_ar,
+          material:request.body.material_ar,
+          style:request.body.style_ar,
+          price:request.body.price_ar,
+        }
+      }
+      ,
+      category_id: request.body.category_id,
+      image: request.file.originalname ,
+    });
+    
+    response.status(200).json(newProduct);
   
 });
 
 
 exports.getProduct = catchAsync(async (req, res, next) => {
-  const product = await ProductSchema.findById(req.params.id);
-  if(!product) return next(new AppError('No product found', 404))
-  const ProductsCategory = await CategorySchema.findById(product.category_id).limit(3);
-  res.status(200).json({
-    status: "success",
-    data: {
-      product : product,
-      ProductsCategory : ProductsCategory
+  try {
+    const productId = req.params.id;
+    const lang = req.headers.lang;
+
+    const product = await Product.findByPk(productId);
+
+    if (!product) {
+      return next(new AppError('No product found', 404));
     }
-  });
-}
-);
+
+    const relatedProducts = await Product.findAll({
+      where: {
+        category_id: product.category_id,
+        id: { [Op.ne]: product.id }
+      },
+      limit: 3 
+    });
+
+    // Modify the relatedProducts based on language condition
+    const modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
+        return {
+          ...relatedProduct.get({ plain: true }),
+          multilingualData: relatedProduct.multilingualData[lang]
+        };
+     
+    });
+
+    const modifiedProducts = {
+      ...product.get({ plain: true }),
+      multilingualData: product.multilingualData[lang]
+    };
+
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        product: modifiedProducts,
+        relatedProducts: modifiedRelatedProducts
+      }
+    });
+  } catch (error) {
+    next(error); // Pass the error to the global error handler
+  }
+});
+
+
+
+
+
+
 
 exports.updateProduct = catchAsync(async (req, res, next) => {
  
     const id = req.params.id;
-   
+
+    const product = await Product.findByPk(id);
+
+    if (!product) return next(new AppError("product not found", 404));
 
     const category_id = req.body.category_id;
     if(category_id)
     {
-       const category = await CategorySchema.findById(category_id);
+       const category = await Category.findByPk(category_id);
 
         if (!category) {
           return next(new AppError("category not found", 404));
         }
     }
 
-    const product = await ProductSchema.findById(id);
-
-    if (!product) return next(new AppError("product not found", 404));
-    
-
-    const imageExist = req.file || "undefined";
-    console.log(imageExist);
-    if(req.body.name && imageExist == "undefined")
-    {
-      console.log("imageExist == undefined");
-      const previousFileName =  product.image;
-      const newFileName = req.body.name+".jpg";
-      const directoryPath = path.join(__dirname,"..","Core","images","Product"); // Change this to your image upload directory
-
-      const previousFilePath = path.join(directoryPath, previousFileName);
-      const newFilePath = path.join(directoryPath, newFileName);
-
-       fs.rename(previousFilePath, newFilePath, (err) => {    
-         if (err) {
-                console.error('Error renaming the image:', err);
-          } else {
-                console.log('Image file renamed successfully!');
-                }});
-    }
-
     if(req.body.name)
     {
-      product.name.en = req.body.name;
-      product.image = req.body.name+".jpg";
+      console.log("name",req.body.name);
+      product.name = req.body.name;
     }
-    if(req.body.name_ar)
-    {
-      product.name.ar = req.body.name_ar;
-    }
+   
     if(req.file)
     {
-      console.log(req.body.name || product.name.en);
-      image= req.body.name || product.name.en;
-      product.image =image+".jpg";
+      image= req.file.originalname || product.image;
+      product.image =image;
     }
-    if(req.body.description)product.description.en = req.body.description;
-    if(req.body.description_ar)product.description.ar = req.body.description_ar;
-    if(req.body.height) product.height.en = req.body.height;
-    if(req.body.height_ar) product.height.ar = req.body.height_ar;
-    if(req.body.depth) product.depth.en = req.body.depth;
-    if(req.body.depth_ar) product.depth.ar = req.body.depth_ar;
-    if(req.body.material) product.material.en = req.body.material;
-    if(req.body.material_ar) product.material.ar = req.body.material_ar;
-    if(req.body.price) product.price.en = req.body.price;
-    if(req.body.price_ar) product.price.ar = req.body.price_ar;
+    if(req.body.description)product.multilingualData.en.description = req.body.description;
+    if(req.body.description_ar)product.multilingualData.ar.description = req.body.description_ar;
+    if(req.body.height) product.multilingualData.en.height = req.body.height;
+    if(req.body.height_ar) product.multilingualData.ar.height = req.body.height_ar;
+    if(req.body.depth)  product.multilingualData.en.depth = req.body.depth;
+    if(req.body.depth_ar) product.multilingualData.ar.depth = req.body.depth_ar;
+    if(req.body.material)  product.multilingualData.en.material = req.body.material;
+    if(req.body.material_ar) product.multilingualData.ar.material = req.body.material_ar;
+    if(req.body.price)  product.multilingualData.en.price = req.body.price;
+    if(req.body.price_ar) product.multilingualData.ar.price = req.body.price_ar;
     if(req.body.category_id) product.category_id = req.body.category_id;
-    if(req.body.style) product.style.en = req.body.style;
-    if(req.body.style_ar) product.style.ar = req.body.style_ar;
+    if(req.body.style)  product.multilingualData.en.style = req.body.style;
+    if(req.body.style_ar) product.multilingualData.ar.style = req.body.style_ar;
     await product.save();
 
     res.status(200).json(product);
@@ -162,149 +180,152 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 );
 
 exports.deleteProduct = catchAsync(async (req, res, next) => {
-  const ObjectId = req.params.id;
+  const productId = req.params.id; // Get the product ID from the request
 
-  const product = await ProductSchema.findById(ObjectId);
-  if (!product) {
-    return next(new AppError("No record found", 404));
+  try {
+    const product = await Product.findByPk(productId); // Find the product by its ID
+    if (!product) {
+      return next(new AppError('No record found', 404));
+    }
+console.log("product",product);
+    await product.destroy(); // Delete the product
+    res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    next(error);
   }
-
-  await ProductSchema.deleteOne({ _id: ObjectId }); // Use deleteOne to delete the document from the database
-  res.status(200).json({message: "Product deleted successfully" });
 });
 
 
-exports.getProductsCategory = catchAsync(async (request, response, next) => {
+// exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
-  const lang = request.headers.lang || "en";
-  const categoryID = request.query.categoryID;
-  console.log(categoryID)
-  const sort = request.query.sort || "newest";
+//   const lang = request.headers.lang || "en";
+//   const categoryID = request.query.categoryID;
+//   console.log(categoryID)
+//   const sort = request.query.sort || "newest";
 
-  //range of category
-  const maxHeightRange = await ProductSchema.findOne().sort({'height.en':-1}).select('height.en')
-  const maxDepthRange = await ProductSchema.findOne().sort({'depth.en':-1}).select('depth.en')
-  const minHeightRange = await ProductSchema.findOne().sort({'height.en':1}).select('height.en')
-  const minDepthRange = await ProductSchema.findOne().sort({'depth.en':1}).select('depth.en')
+//   //range of category
+//   const maxHeightRange = await ProductSchema.findOne().sort({'height.en':-1}).select('height.en')
+//   const maxDepthRange = await ProductSchema.findOne().sort({'depth.en':-1}).select('depth.en')
+//   const minHeightRange = await ProductSchema.findOne().sort({'height.en':1}).select('height.en')
+//   const minDepthRange = await ProductSchema.findOne().sort({'depth.en':1}).select('depth.en')
 
-  //filters in eng only
-  const minDepth = request.query.minDepth || minDepthRange.depth.en;
-  const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
-  const minHeight = request.query.minHeight || minHeightRange.height.en;
-  const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
-  const style = request.query.style || ""
-  const style_ar = request.query.style_ar || ""
+//   //filters in eng only
+//   const minDepth = request.query.minDepth || minDepthRange.depth.en;
+//   const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
+//   const minHeight = request.query.minHeight || minHeightRange.height.en;
+//   const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
+//   const style = request.query.style || ""
+//   const style_ar = request.query.style_ar || ""
 
-  let query = {
-    category_id: categoryID,
-     [`height.en`]: { $gte: parseInt(minHeight), $lte: parseInt(maxHeight) } , 
-     [`depth.en`]: { $gte: parseInt(minDepth), $lte: parseInt(maxDepth) } ,
-  };
+//   let query = {
+//     category_id: categoryID,
+//      [`height.en`]: { $gte: parseInt(minHeight), $lte: parseInt(maxHeight) } , 
+//      [`depth.en`]: { $gte: parseInt(minDepth), $lte: parseInt(maxDepth) } ,
+//   };
 
-  let orConditions = [];
+//   let orConditions = [];
 
-if (style) {
-  orConditions.push({ "style.en": style });
-}
+// if (style) {
+//   orConditions.push({ "style.en": style });
+// }
 
-if (style_ar) {
-  orConditions.push({ "style.ar": style_ar });
-}
+// if (style_ar) {
+//   orConditions.push({ "style.ar": style_ar });
+// }
 
-if (orConditions.length > 0) {
-  query.$or = orConditions;
-}
+// if (orConditions.length > 0) {
+//   query.$or = orConditions;
+// }
 
 
-  const projection = {
-     image: 1,
-    [`price.${lang}`]: 1,
-    [`description.${lang}`]: 1,
-    [`name.${lang}`]: 1,
-    [`material.${lang}`]: 1,
-    [`height.${lang}`]: 1,
-    [`depth.${lang}`]: 1,
-    [`style.${lang}`]: 1,
-  };
+//   const projection = {
+//      image: 1,
+//     [`price.${lang}`]: 1,
+//     [`description.${lang}`]: 1,
+//     [`name.${lang}`]: 1,
+//     [`material.${lang}`]: 1,
+//     [`height.${lang}`]: 1,
+//     [`depth.${lang}`]: 1,
+//     [`style.${lang}`]: 1,
+//   };
 
-  let sortObj = {};
-  switch (sort) {
-    case "newest":
-      sortObj = { createdAt: -1 };
-      break;
-    case "earliest":
-      sortObj = { createdAt: 1 };
-      break;
-    case "price_dsec":
-      sortObj = { [`price.${lang}`]: -1 };
-      break;
-    case "price_asec":
-      sortObj = { [`price.${lang}`]: 1 };
-      break;
-    default:
-      sortObj = { createdAt: -1 };
-  }
+//   let sortObj = {};
+//   switch (sort) {
+//     case "newest":
+//       sortObj = { createdAt: -1 };
+//       break;
+//     case "earliest":
+//       sortObj = { createdAt: 1 };
+//       break;
+//     case "price_dsec":
+//       sortObj = { [`price.${lang}`]: -1 };
+//       break;
+//     case "price_asec":
+//       sortObj = { [`price.${lang}`]: 1 };
+//       break;
+//     default:
+//       sortObj = { createdAt: -1 };
+//   }
 
-  const options = {
-    page: parseInt(request.query.page) || 1,
-    limit: parseInt(request.query.limit) || 10,
-    sort: sortObj , 
-    select: projection 
-  };
+//   const options = {
+//     page: parseInt(request.query.page) || 1,
+//     limit: parseInt(request.query.limit) || 10,
+//     sort: sortObj , 
+//     select: projection 
+//   };
 
-  const data = await ProductSchema.paginate(query, options);  
+//   const data = await ProductSchema.paginate(query, options);  
 
-  const metadata = {maxHeight, maxDepth, minHeight, minDepth };
-  response.status(200).json({data,metadata});
-});
+//   const metadata = {maxHeight, maxDepth, minHeight, minDepth };
+//   response.status(200).json({data,metadata});
+// });
  
 
-exports.searchProducts = catchAsync(async (req, res, next) => {
-  const searchQuery = req.query.searchkey || "";
-  const lang = req.headers.lang || "en";
+// exports.searchProducts = catchAsync(async (req, res, next) => {
+//   const searchQuery = req.query.searchkey || "";
+//   const lang = req.headers.lang || "en";
 
-  let query = {
-    $or: []
-  };
+//   let query = {
+//     $or: []
+//   };
 
-  const fieldsToSearch = [
-    "name",
-    "material",
-    "description"
-  ];
+//   const fieldsToSearch = [
+//     "name"
+//   ];
 
-  fieldsToSearch.forEach(field => {
-    const fieldQuery = {};
+//   fieldsToSearch.forEach(field => {
+//     const fieldQuery = {};
 
-    if (lang === "en") {
-      fieldQuery[`${field}.en`] = { $regex: searchQuery, $options: "i" };
-    } else {
-      fieldQuery[`${field}.ar`] = { $regex: searchQuery, $options: "i" };
-    }
+//     if (lang === "en") {
+//       fieldQuery[`${field}.en`] = { $regex: searchQuery, $options: "i" };
+//     } else {
+//       fieldQuery[`${field}.ar`] = { $regex: searchQuery, $options: "i" };
+//     }
 
-    query.$or.push(fieldQuery);
-  });
+//     query.$or.push(fieldQuery);
+//   });
 
-  const projection = {
-    main_image: 1
-  };
+//   const projection = {
+//     main_image: 1
+//   };
 
-  if (lang === "en") {
-    fieldsToSearch.forEach(field => {
-      projection[`${field}.en`] = 1;
-    });
-  } else {
-    fieldsToSearch.forEach(field => {
-      projection[`${field}.ar`] = 1;
-    });
-  }
+//   if (lang === "en") {
+//     fieldsToSearch.forEach(field => {
+//       projection[`${field}.en`] = 1;
+//     });
+//   } else {
+//     fieldsToSearch.forEach(field => {
+//       projection[`${field}.ar`] = 1;
+//     });
+//   }
 
-  const data = await ProductSchema.find(query).select(projection);
+//   const data = await ProductSchema.find(query).select(projection);
 
-  if (data.length === 0) {
-    return next(new AppError(`There are no matched results for your search.`, 400));
-  }
+//   if (data.length === 0) {
+//     return next(new AppError(`There are no matched results for your search.`, 400));
+//   }
 
-  res.status(200).json(data);
-});
+//   res.status(200).json(data);
+// });
 

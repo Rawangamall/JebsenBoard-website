@@ -26,16 +26,7 @@ exports.UserValidPOST = [
   body('phoneNumber_ar').isString().withMessage('ادخل رقم الهاتف بالعربي'),
   body('role').isString().withMessage('Role should be a string'),
   body("role_ar").isString().withMessage("يجب عليك ادخال النص بالعربي"),
-  body('password').isString().withMessage('Password should be a string') ,
-
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const errorMessages = errors.array().map(error => error.msg);
-      return res.status(400).json({ errors: errorMessages });
-    }
-    next();
-  },
+  body('password').isString().withMessage('Password should be a string') 
 
 ];
 
@@ -63,22 +54,5 @@ exports.UserValidPATCH = [
     }),  body("phoneNumber_ar").isString().optional().withMessage("ادخل رقم الهاتف بالعربي"),
   body("role").isString().optional().withMessage("Role should be in english letters"),
   body("role_ar").isString().optional().withMessage("يجب عليك ادخال النص بالعربي"),
-  body("password").isString().optional().withMessage("password should string"),
-
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log(errors.array());
-      const errorDetails = errors.array().map(error => {
-      
-        return {
-          path: error.path,
-          msg: error.msg,
-        };
-      });
-  
-      return res.status(400).json({ errors: errorDetails });
-    }
-    next();
-  }
+  body("password").isString().optional().withMessage("password should string")
 ];

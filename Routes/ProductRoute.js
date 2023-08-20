@@ -10,19 +10,19 @@ const validationMW = require("./../Core/Validations/validateMW")
 const {removeProductIMG ,productImageUpload} = require("./../Core/Validations/imageValidations")
 
 router.route("/products")
-        .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin") ,validationMW,ProductController.getAll)
-       .post(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),productImageUpload,validationMW ,ProductController.addProduct) //,validationData.ProductValidPOST
+      //   .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin") ,validationMW,ProductController.getAll)
+       .post(productImageUpload,validationMW ,ProductController.addProduct) //,validationData.ProductValidPOST
+//AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
+// router.route("/product/category")
+//       .get(ProductController.getProductsCategory)
 
-router.route("/product/category")
-      .get(ProductController.getProductsCategory)
-
-router.route("/product/search")
-      .get(ProductController.searchProducts)
+// router.route("/product/search")
+//       .get(ProductController.searchProducts)
 
 router.route("/product/:id")
-      .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),ProductController.getProduct)
-      .patch(AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),validationMW,productImageUpload, ProductController.updateProduct)
-      .delete(AuthenticationMW.auth,AuthorizationMW.authorize("admin"),validationMW ,removeProductIMG,ProductController.deleteProduct)
+      .get(ProductController.getProduct)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),
+      .patch(validationMW,productImageUpload, ProductController.updateProduct)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),
+      .delete(validationMW ,removeProductIMG,ProductController.deleteProduct)//AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
 
 
 module.exports=router;

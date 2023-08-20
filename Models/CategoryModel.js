@@ -6,6 +6,7 @@ const Category = sequelize.define(
   "category",
   {
     multilingualData: {
+      
       //name,letter [en,ar]
       type: DataTypes.JSON,
       allowNull: false,

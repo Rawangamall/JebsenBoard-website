@@ -8,7 +8,7 @@ require("dotenv").config({ path: "config.env" });
 
 const LoginRoute = require("./Routes/LoginRoute");
 const UserRoute = require("./Routes/UserRoute");
-// const ProductRoute = require("./Routes/ProductRoute");
+const ProductRoute = require("./Routes/ProductRoute");
 const CategoryRoute = require("./Routes/CategoryRoute");
 
 //server
@@ -30,15 +30,15 @@ sequelize.sync({ force: false })
 //body parse
 server.use(express.json());
 server.use(express.urlencoded({extended:false}));
-server.use(bodyParser.json())
+// server.use(bodyParser.json())
 
 server.use('image', express.static(path.join(__dirname, 'Core/images')));
 
 //Routes 
 // server.use(LoginRoute)
 server.use(UserRoute)
-// server.use(ProductRoute)
 server.use(CategoryRoute)
+server.use(ProductRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {

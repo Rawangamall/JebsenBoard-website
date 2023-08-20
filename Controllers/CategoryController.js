@@ -10,12 +10,12 @@ const fs = require('fs');
 
 
 
-exports.getAll = catchAsync(async (req, res, next) => {
+// exports.getAll = catchAsync(async (req, res, next) => {
 
-    const categories = await Category.findAll({});
-  if(!categories) return next(new AppError('No category found', 404))
-  res.status(200).json(categories);
-});
+//     const categories = await Category.findAll({});
+//   if(!categories) return next(new AppError('No category found', 404))
+
+
 
 //   const page = parseInt(req.query.page) || 1;
 //   const limit = parseInt(req.query.limit) || 10;
@@ -56,51 +56,67 @@ exports.getAll = catchAsync(async (req, res, next) => {
 //   res.status(200).json(categoriesWithCounts);
 // });
 
+exports.getAll = catchAsync(async (req, res, next) => {
+  const categories = await Category.findAll();
+  if (!categories) return next(new AppError('No category found', 404));
 
-// exports.addCategory = catchAsync(async (request, response, next) => {
-// console.log("categoryyy dataa",request.body);
-// console.log("header",request.headers.test);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
 
-//   const newCategory = await Category.create({
-//     multilingualData: {
-//       en: {
-//         'name': request.body.name
-//       },
-//       ar: {
-//         'name': request.body.name_ar
-//       },
-//     },
-//     image: request.body.name + ".jpg"
-//   });
+  try {
+    const categoriesWithCounts = await Category.findAll({
+      include: [
+        {
+          model: Product,
+          as: 'products',
+          attributes: [] // Exclude product attributes from the result
+        }
+      ],
+      attributes: ['id', 'name', 'description', 'image'], // Add other fields from your Category model
+      offset: (page - 1) * limit,
+      limit: limit
+    });
 
-// response.status(201).json(newCategory);
-  
-// });
+    if (categoriesWithCounts.length === 0) {
+      return next(new AppError('No category found', 404));
+    }
+
+    const categoriesWithCountsFormatted = categoriesWithCounts.map(category => ({
+      ...category.toJSON(),
+      productCount: category.products.length
+    }));
+
+    res.status(200).json(categoriesWithCountsFormatted);
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 
 exports.addCategory = catchAsync(async (request, response, next) => {
-
-  const newUser = await Category.create({
+console.log(request.body);
+  const newCategory = await Category.create({
     multilingualData: {
       en: {
-        name:request.body.name,
-       
+        name: request.body.name
       },
       ar: {
-        name:request.body.name_ar,
+        name: request.body.name_ar
       },
     },
     image:"default.jpg"
   });
-
-    response.status(201).json(newUser);
+ 
+    response.status(201).json(newCategory);
+  
 });
  
 
 
-
  exports.getCategory = catchAsync(async (req, res, next) => {
   const lang = req.headers.lang || "ar";
-  const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];//, 'letter'
+  const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
   const id = req.params.id;
 
   const category = await Category.findByPk(id, { attributes });
@@ -118,7 +134,6 @@ exports.addCategory = catchAsync(async (request, response, next) => {
     style,
     price, 
     image,
-    // letter,
     updatedAt,
     createdAt 
   };
@@ -188,13 +203,13 @@ exports.addCategory = catchAsync(async (request, response, next) => {
 //   }
 // );
 
-// exports.deleteCategory = catchAsync(async (req, res, next) => {
-//   const id = req.params.id;
-//   console.log(id);
-//   const deleted = await CategorySchema.findByIdAndRemove(id);
-//   console.log(deleted);
-//   if(!deleted) return next(new AppError('No category found', 404))
+exports.deleteCategory = catchAsync(async (req, res, next) => {
+  const id = req.params.id;
+  console.log(id);
+  const deleted = await Category.findByPk(id,{});
+  console.log(deleted);
+  if(!deleted) return next(new AppError('No category found', 404))
   
-//   res.status(200).json("deleted");
-// }
-// );
+  res.status(200).json(deleted);
+}
+);
