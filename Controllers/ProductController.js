@@ -7,26 +7,38 @@ const catchAsync = require("./../utils/CatchAsync");
 // const { paginateSubDocs } = require("mongoose-paginate-v2");
 const { type } = require("os");
 
- exports.getAll = catchAsync(async (req, res, next) => {
+exports.getAll = catchAsync(async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const lang = req.headers.lang || "en";
 
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const lang = req.headers.lang || "en";
+    const offset = (page - 1) * limit;
 
+    const products = await Product.findAll({
+      offset,
+      limit
+    });
 
-  const options = {
-    page,
-    limit
-  };
+    if (products.length === 0) {
+      return next(new AppError('No product found', 404));
+    }
 
-  const products = await ProductSchema.paginate({}, options);
+    const modifiedProducts = products.map(product => {
+      const plainProduct = product.get({ plain: true });
+      return {
+        ...plainProduct,
+        multilingualData: plainProduct.multilingualData[lang]
+      };
+    });
 
-  if(products.docs == "") 
-  {return next(new AppError('There\'s no product', 404));}
-
-  res.status(200).json(products);
-
+    res.status(200).json(modifiedProducts);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    next(error);
+  }
 });
+
 
 exports.addProduct = catchAsync(async (request, response, next) => {
 

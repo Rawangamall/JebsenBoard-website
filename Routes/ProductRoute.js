@@ -10,8 +10,8 @@ const validationMW = require("./../Core/Validations/validateMW")
 const {removeProductIMG ,productImageUpload} = require("./../Core/Validations/imageValidations")
 
 router.route("/products")
-      //   .get(AuthenticationMW.auth ,AuthorizationMW.authorize("admin") ,validationMW,ProductController.getAll)
-       .post(productImageUpload,validationMW ,ProductController.addProduct) //,validationData.ProductValidPOST
+        .get(ProductController.getAll)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin") ,validationMW
+       .post(validationMW,productImageUpload ,ProductController.addProduct)//validationData.ProductValidPOST,
 //AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
 // router.route("/product/category")
 //       .get(ProductController.getProductsCategory)
@@ -21,7 +21,7 @@ router.route("/products")
 
 router.route("/product/:id")
       .get(ProductController.getProduct)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),
-      .patch(validationMW,productImageUpload, ProductController.updateProduct)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),
+      .patch(validationData.ProductValidPatch, validationMW,productImageUpload, ProductController.updateProduct)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),
       .delete(validationMW ,removeProductIMG,ProductController.deleteProduct)//AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
 
 
