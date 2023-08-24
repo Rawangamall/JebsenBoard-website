@@ -4,12 +4,10 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 const User = sequelize.define('users', {
-  multilingualData: {
-    type: DataTypes.JSON, 
-    allowNull: false,
-    defaultValue: {},  
-  }  ,
-  
+  firstName:DataTypes.STRING,
+  lastName:DataTypes.STRING,
+  phoneNumber:{type : DataTypes.STRING , unique: true},
+  role:DataTypes.STRING ,
   email: {
     type: DataTypes.STRING,
     allowNull: false,

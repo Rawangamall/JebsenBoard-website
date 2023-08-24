@@ -27,7 +27,7 @@ if(!user || !(await user.correctPassword(password, user.password))){
     return next(new AppError(`Incorrect email or password`, 401));
 }
 
-const token = JWT.sign({id:user._id , role:user.multilingualData.en.role },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
+const token = JWT.sign({id:user._id , role:user.role },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
 
 res.status(200).json({
     status:"success" , 
@@ -49,7 +49,7 @@ exports.forgetpassword = catchAsync(async (req,res,next)=>{
     const resetLink = `${req.protocol}://localhost:8081/resetpassword/${resetToken}`; 
     
     console.log(resetLink)
-    const message = `<p>Hi ${user.multilingualData.en.firstName},</p>
+    const message = `<p>Hi ${user.firstName},</p>
       <p>Forgot your password? No worries, we’ve got you covered.</p>
       <p>Click on the button below to reset your password:</p>
       <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background-color:#007bff;color:#fff;border-radius:5px;text-decoration:none;">Reset Password</a>
