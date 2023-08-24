@@ -4,59 +4,15 @@ const Product = require("../Models/ProductModel");
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 
+const { Op, literal } = require('sequelize');
 
 const path=require("path");
 const fs = require('fs');
 
 
-
-// exports.getAll = catchAsync(async (req, res, next) => {
-
-//     const categories = await Category.findAll({});
-//   if(!categories) return next(new AppError('No category found', 404))
-
-
-
-//   const page = parseInt(req.query.page) || 1;
-//   const limit = parseInt(req.query.limit) || 10;
-
-//   const options = {
-//     page,
-//     limit
-//   };
-
-//   // Aggregate to get categories and their product counts in a single query
-//   const categoriesWithCounts = await CategorySchema.aggregate([
-//     {
-//       $lookup: {
-//         from: 'product', // Replace 'products' with the name of your products collection
-//         localField: 'id',
-//         foreignField: 'category_id',
-//         as: 'products'
-//       }
-//     },
-//     {
-//       $project: {
-//         _id: 1,
-//         name: 1,
-//         description: 1,
-//         image: 1,
-//         // Add other fields from your CategorySchema that you want to include
-//         productCount: { $size: '$products' }
-//       }
-//     },
-//     { $skip: (page - 1) * limit },
-//     { $limit: limit }
-//   ]);
-
-//   if (categoriesWithCounts.length === 0) {
-//     return next(new AppError('No category found', 404));
-//   }
-
-//   res.status(200).json(categoriesWithCounts);
-// });
-
 exports.getAll = catchAsync(async (req, res, next) => {
+  const lang = req.headers.lang || 'en'; // Default to English if no lang header is provided
+
   const categories = await Category.findAll();
   if (!categories) return next(new AppError('No category found', 404));
 
@@ -65,14 +21,14 @@ exports.getAll = catchAsync(async (req, res, next) => {
 
   try {
     const categoriesWithCounts = await Category.findAll({
-      include: [
-        {
-          model: Product,
-          as: 'products',
-          attributes: [] // Exclude product attributes from the result
-        }
-      ],
-      attributes: ['id', 'name', 'description', 'image'], // Add other fields from your Category model
+      attributes: {
+        include: [
+          'id',
+          'multilingualData',
+          'image',
+          [literal('(SELECT COUNT(*) FROM products WHERE products.category_id = category.id)'), 'productCount']
+        ]
+      },
       offset: (page - 1) * limit,
       limit: limit
     });
@@ -80,13 +36,17 @@ exports.getAll = catchAsync(async (req, res, next) => {
     if (categoriesWithCounts.length === 0) {
       return next(new AppError('No category found', 404));
     }
+    console.log("categoriesWithCounts",categoriesWithCounts);
 
-    const categoriesWithCountsFormatted = categoriesWithCounts.map(category => ({
-      ...category.toJSON(),
-      productCount: category.products.length
+    // Filter categories based on language
+    const localizedCategories = categoriesWithCounts.map(category => ({
+      id: category.id,
+      name: lang === 'ar' ? category.multilingualData.ar.name : category.multilingualData.en.name,
+      image: category.image,
+      productCount: category.dataValues.productCount || 0
     }));
-
-    res.status(200).json(categoriesWithCountsFormatted);
+  
+    res.status(200).json(localizedCategories);
   } catch (error) {
     next(error);
   }
@@ -95,17 +55,32 @@ exports.getAll = catchAsync(async (req, res, next) => {
 
 
 exports.addCategory = catchAsync(async (request, response, next) => {
-console.log(request.body);
+  const originalFileNamee = request.file.originalname; 
+    const fileNameWithoutExtension = originalFileNamee.replace(/\.[^.]*$/, '');
+    const Name = request.body.name ? request.body.name  : fileNameWithoutExtension;
+
+  //check if the product name is already exist
+  const category = await Category.findAll({
+    where: {
+      [Op.or]: [
+        { "multilingualData.en.name": request.body.name },
+        { "multilingualData.ar.name": request.body.name_ar }
+      ]
+    }
+  });
+  if (category.length > 0) return next(new AppError('Category already exists', 400));
+
+
   const newCategory = await Category.create({
     multilingualData: {
       en: {
-        name: request.body.name
+        name:Name
       },
       ar: {
         name: request.body.name_ar
       },
     },
-    image:"default.jpg"
+    image: request.file.originalname
   });
  
     response.status(201).json(newCategory);
@@ -113,16 +88,15 @@ console.log(request.body);
 });
  
 
-
  exports.getCategory = catchAsync(async (req, res, next) => {
-  const lang = req.headers.lang || "ar";
+  const lang = req.headers.lang || "en";
   const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
   const id = req.params.id;
 
   const category = await Category.findByPk(id, { attributes });
   if(!category) return next(new AppError('No category found', 404))
 
-  const { multilingualData, image ,letter, updatedAt ,createdAt} = category.toJSON();
+  const { multilingualData, image , updatedAt ,createdAt} = category.toJSON();
   
   const { name, description, height, depth, material, style, price } = lang === 'en' ? multilingualData.en : multilingualData.ar;
   const categoryData = {
@@ -138,78 +112,85 @@ console.log(request.body);
     createdAt 
   };
 
-  // const productsCount = await Product.count({
-  //   where: { categoryId: id }
-  // });
+  const productsCount = await Product.count({
+    where: { category_id: id }
+  });
 
   res.status(200).json({
     status: "success",
     data: {
-      categoryData, //productsCount
+      categoryData, productsCount
   }});
 }
 );
 
-// exports.updateCategory = catchAsync(async (req, res, next) => {
+exports.updateCategory = catchAsync(async (req, res, next) => {
  
-//   const attributes = ['id', 'multilingualData', 'image', 'letter', 'updatedAt', 'createdAt'];
-//   const id = req.params.id;
+  const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
+  const id = req.params.id;
 
-//   const category = await Category.findByPk(id, { attributes });
-  
-//     if(!category) return next(new AppError('No category found', 404))
-//     console.log("category",category);
-//     const imageExist = req.file || "undefined";
-//     if(req.body.name && imageExist == "undefined")
-//     {
-//       const previousFileName =  category.image;
-//       const newFileName = req.body.name+".jpg";
-//       const directoryPath = path.join(__dirname,"..","Core","images","Category"); // Change this to your image upload directory
-
-//       const previousFilePath = path.join(directoryPath, previousFileName);
-//       const newFilePath = path.join(directoryPath, newFileName);
-
-//        fs.rename(previousFilePath, newFilePath, (err) => {    
-//          if (err) {
-//                 console.error('Error renaming the image:', err);
-//           } else {
-//                 console.log('Image file renamed successfully!');
-//                 }});
-//     }
-
-//     if(req.body.name)
-//     {
-//       category.name.en = req.body.name;
-//       category.image = req.body.name+".jpg";
-//     }
-//     if(req.body.name_ar)
-//     {
-//       category.name.ar = req.body.name_ar;
-//     }
-//     if(req.file)
-//     {
-//       console.log(req.body.name || category.name.en);
-//       image= req.body.name || category.name.en;
-//       category.image =image+".jpg";
-//     }
+  const category = await Category.findByPk(id, { attributes });
+  if(!category) return next(new AppError('No category found', 404))
 
 
-//     const updatedDocument = await category.save();
+    if(req.body.name_en)
+    {
+      console.log("update en name")
+    //check if the product name is already exist
+    const categoryExist = await Category.findAll({
+      where: {
+           "multilingualData.en.name": req.body.name_en
+      }
+    });
+    if (categoryExist.length > 0) return next(new AppError('اسم الفئة موجود بالفعل', 400));
+        
+      category.multilingualData.en.name = req.body.name_en;
+    }
+    if(req.body.name_ar)
+    {
+      console.log("update ar name")
+      //check if the Category name is already exist
+    const categoryExist = await Category.findAll({
+      where: {
+           "multilingualData.ar.name": req.body.name_ar
+      }
+    });
+    if (categoryExist.length > 0) return next(new AppError('اسم الفئة موجود بالفعل', 400));
+    console.log("req.body.name_ar",category.multilingualData.ar.name)
+        // category.multilingualData.ar.name = req.body.name_ar;
+        updatedFields['multilingualData.en.name'] = req.body.name;
 
-     
-//     res.status(200).json(updatedDocument);
+    }
+    if(req.file)
+    { 
+      console.log("update image")
+      console.log("req.file.originalname",req.file.originalname)
+      category.image = req.file.originalname
+    }
+
+    console.log("save")
+    const updatedDocument = await category.save(); 
+    res.status(200).json(updatedDocument);
      
     
-//   }
-// );
+  }
+);
 
 exports.deleteCategory = catchAsync(async (req, res, next) => {
-  const id = req.params.id;
-  console.log(id);
-  const deleted = await Category.findByPk(id,{});
-  console.log(deleted);
-  if(!deleted) return next(new AppError('No category found', 404))
-  
-  res.status(200).json(deleted);
-}
-);
+  try {
+    const id = req.params.id;
+    const category = await Category.findByPk(id);
+
+    if (!category) {
+      return next(new AppError('No category found', 404));
+    }
+
+    await category.destroy(); // Delete the category from the database
+
+    res.status(200).json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error("Error:", error);
+    next(error);
+  }
+});
+

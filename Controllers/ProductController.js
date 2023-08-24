@@ -161,7 +161,6 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 
     if(req.body.name)
     {
-      console.log("name",req.body.name);
       product.name = req.body.name;
     }
    
