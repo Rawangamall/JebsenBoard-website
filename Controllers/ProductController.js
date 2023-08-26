@@ -52,13 +52,14 @@ exports.addProduct = catchAsync(async (request, response, next) => {
 		}
 
     //check if the product name is already exist
+    if(! request.file) return next(new AppError(`يرجي ادخال صوره`, 401));
     const originalFileName = request.file.originalname; 
     const fileNameWithoutExtension = originalFileName.replace(/\.[^.]*$/, '');
     const Name = request.body.name ? request.body.name  : fileNameWithoutExtension;
 
     const productNameExist = await Product.findAll({ where: { name: Name} });
-    console.log("productExist",productNameExist);
-    if (productNameExist.limit > 0)  return next(new AppError(`Product name already exist`, 401));
+    // console.log("productExist",productNameExist);
+    if (productNameExist.length > 0)  return next(new AppError(`Product name already exist`, 401));
 
     const newProduct = await Product.create ({
       name:Name,
@@ -162,6 +163,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 
     if(req.body.name)
     {
+
       product.name = req.body.name;
     }
    

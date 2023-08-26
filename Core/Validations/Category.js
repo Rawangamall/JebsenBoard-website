@@ -28,7 +28,7 @@ exports.CategoryValidPOST = [
   .custom(async (value, { req }) => {
         console.log(value)
 
-    const productNameExists = await checkIfCategoryNameExists(value, "ar" , req.params.id);
+    const productNameExists = await checkIfCategoryNameExists(value, "ar" );
     if (productNameExists) {
       throw new Error("اسم المنتج موجود بالفعل");
     }
@@ -39,14 +39,14 @@ exports.CategoryValidPOST = [
   .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
   .custom(async (value, { req }) => {
     console.log(value)
-    const productNameExists = await checkIfCategoryNameExists(value, "en" , req.params.id);
+    const productNameExists = await checkIfCategoryNameExists(value, "en");
     if (productNameExists) {
       throw new Error("اسم المنتج موجود بالفعل");
     }
     return true;
   }),
 
-  body("image").notEmpty().isString().withMessage("The image is required"),
+  // body("image").notEmpty().isString().withMessage("The image is required"),
 
 ];
 

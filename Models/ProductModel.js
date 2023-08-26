@@ -2,7 +2,6 @@
 const { DataTypes } = require("sequelize");
 const SequelizePaginate = require('sequelize-paginate');
 const sequelize = require("../utils/dbConfig");
-// const { Category } = require("./CategoryModel"); // Import the Category model
 
 const Product = sequelize.define(
   "products",
@@ -27,10 +26,10 @@ const Product = sequelize.define(
   { timestamps: true }
 );
 
-Product.associate = function (models) {
-  Product.belongsTo(models.CategoryModel, { foreignKey: 'category_id', as: 'category' });
-};
+// Product.associate = function (models) {
+//   Product.belongsTo(models.CategoryModel, { foreignKey: 'category_id', as: 'category' });
+// };
 
   SequelizePaginate.paginate(Product);
-  
+
   module.exports = Product;

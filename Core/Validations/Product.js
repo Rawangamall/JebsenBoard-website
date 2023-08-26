@@ -1,35 +1,40 @@
 
 const { body, param } = require("express-validator");
 const Product = require("../../Models/ProductModel");
+const { Op } = require('sequelize');
 
 
 async function checkIfProductNameExists(productName ,id) {
   // Implement your actual database query or logic here
   // Return true if product name exists, false otherwise
   //exclude the current product
+const queryOptions = {
+  where: {
+    name: productName,
+  }
+};
 
-  const product = await Product.findAll({
-    where: {
-         name: productName,
-      id: {
-        [Op.ne]: id,
-      }
+if (id !== null && id !== undefined) {
+  queryOptions.where.id = {
+    [Op.ne]: id,
+  };
+}
 
-    }
-
-  });
-
+const product = await Product.findAll(queryOptions);
+console.log("product",product)
 
   return product;
 }
 
 exports.ProductValidPOST = [
   body("name")
-    .notEmpty().withMessage("اسم المنتج مطلوب")
+    .optional()
     .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
     .custom(async (value, { req }) => {
       // Check if the product name already exists in the controller
-      const productNameExists = await checkIfProductNameExists(value , req.params.id);
+      if(value.length < 3) throw new Error("اسم المنتج قصير جداً");
+      if(value.length > 100) throw new Error("اسم المنتج طويل جداً");
+      const productNameExists = await checkIfProductNameExists(value );
       if (productNameExists.length > 0) {
         throw new Error("اسم المنتج موجود بالفعل");
       }
@@ -37,7 +42,7 @@ exports.ProductValidPOST = [
     }),
   body("description_ar").isString().withMessage("description should string"),
   body("description").notEmpty().isString().withMessage("description should string"),
-  body("price_ar").isNumeric().withMessage("The number should be integer"),
+  body("price_ar").isString().withMessage("The number should be integer"),
   body("price").notEmpty().isNumeric().withMessage("The number is required"),
   body("category_id").notEmpty().isInt().withMessage("The category_id is required"),
   body("style").optional().isString().withMessage("The style should be string"),
@@ -48,7 +53,6 @@ exports.ProductValidPOST = [
   body("depth_ar").optional().isString().withMessage("The depth should be string"),
   body("height").optional().isNumeric().withMessage("The height should be integer"),
   body("height_ar").optional().isString().withMessage("The height should be string"),
-  body("image").notEmpty().isString().withMessage("The image is required"),
 
 ];
 
