@@ -1,8 +1,9 @@
 const { DataTypes } = require("sequelize");
+const SequelizePaginate = require('sequelize-paginate');
 const sequelize = require("../utils/dbConfig");
 
 const Product = sequelize.define(
-  "Product",
+  "products",
     {
       name: DataTypes.STRING,
       multilingualData: {
@@ -25,4 +26,5 @@ const Product = sequelize.define(
     { timestamps: true }
   );
 
+  SequelizePaginate.paginate(Product);
   module.exports = Product;

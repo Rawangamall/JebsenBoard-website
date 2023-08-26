@@ -1,6 +1,5 @@
 // Assuming you have your Express routes and controllers set up
 const JWT = require("jsonwebtoken");
-const mongoose = require('mongoose');
 const { defaultMaxListeners } = require('nodemailer/lib/xoauth2');
 
 // Middleware function for authorization

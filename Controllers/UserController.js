@@ -30,7 +30,6 @@ exports.addUser = CatchAsync(async (request, response, next) => {
 
       const page = parseInt(request.query.page) || 1;
       const limit = parseInt(request.query.limit) || 10;
-      const lang = request.headers.lang || "ar";
       const searchKey = request.query.searchkey || "";
   
       const whereClause = searchKey ? {
@@ -41,18 +40,22 @@ exports.addUser = CatchAsync(async (request, response, next) => {
         ],
       } : {};
   
-      const offset = (page - 1) * limit;
       
       const attributes = ['id', 'firstName' , 'lastName', 'role', 'email','phoneNumber', 'image', 'updatedAt', 'createdAt'];
   
-      const users = await User.findAll({
-        where: whereClause,
+      const { docs, pages, total } = await User.paginate({
         attributes,
-        limit,
-        offset,
+        where: whereClause,
+        page,
+        paginate: limit,
       });
-
-      response.status(200).json(users);
+    
+      response.status(200).json({
+        users: docs,
+        currentPage: page,
+        totalPages: pages,
+        totalUsers: total,
+      });
   }
 );
 
@@ -91,8 +94,7 @@ exports.getUser = CatchAsync(async (request, response, next) => {
       phoneNumber:request.body.phoneNumber ,
       role:request.body.role,
       email: request.body.email,
-    //  password:hash,
-      password: request.body.password,
+      password: request.body.password,   //hashed
       image : request.imageName
     });
 

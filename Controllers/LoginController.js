@@ -5,7 +5,6 @@ const { Op } = require('sequelize');
 
 const User = require("./../Models/UserModel")
 
-
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 const sendEmail = require("./../utils/email");

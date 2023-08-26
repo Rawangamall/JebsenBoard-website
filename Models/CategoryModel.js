@@ -1,5 +1,6 @@
 
 const { DataTypes } = require("sequelize");
+const SequelizePaginate = require('sequelize-paginate');
 const sequelize = require("../utils/dbConfig");
 
 const Category = sequelize.define(
@@ -18,5 +19,6 @@ const Category = sequelize.define(
   { timestamps: true }
 );
 
+SequelizePaginate.paginate(Category);
 module.exports = Category;
 

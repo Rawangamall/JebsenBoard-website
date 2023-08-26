@@ -1,7 +1,8 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../utils/dbConfig');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const SequelizePaginate = require('sequelize-paginate');
+const sequelize = require('../utils/dbConfig');
 
 const User = sequelize.define('users', {
   firstName:DataTypes.STRING,
@@ -41,4 +42,5 @@ User.prototype.createPasswordRandomToken = async function() {
   return resetToken;
 };
 
+SequelizePaginate.paginate(User);
 module.exports = User;

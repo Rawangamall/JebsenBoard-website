@@ -13,11 +13,11 @@ router.route("/products")
         .get(ProductController.getAll)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin") ,validationMW
        .post(validationMW,productImageUpload ,ProductController.addProduct)//validationData.ProductValidPOST,
 //AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
-// router.route("/product/category")
-//       .get(ProductController.getProductsCategory)
+router.route("/product/category")
+      .get(ProductController.getProductsCategory)
 
-// router.route("/product/search")
-//       .get(ProductController.searchProducts)
+router.route("/product/search")
+      .get(ProductController.searchProducts)
 
 router.route("/product/:id")
       .get(ProductController.getProduct)//AuthenticationMW.auth ,AuthorizationMW.authorize("admin"),
