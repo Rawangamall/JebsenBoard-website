@@ -1,11 +1,12 @@
-const Product = require("../Models/ProductModel");
-const Category = require("../Models/CategoryModel");
+// const Product = require("../Models/ProductModel");
+// const Category = require("../Models/CategoryModel");
 const { Op } = require('sequelize');
+const { Category, Product } = require('./../Models/associateModel');
+
 
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 // const { paginateSubDocs } = require("mongoose-paginate-v2");
-const { type } = require("os");
 
 exports.getAll = catchAsync(async (req, res, next) => {
   try {
@@ -208,135 +209,140 @@ console.log("product",product);
 });
 
 
-// exports.getProductsCategory = catchAsync(async (request, response, next) => {
+exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
-//   const lang = request.headers.lang || "en";
-//   const categoryID = request.query.categoryID;
-//   console.log(categoryID)
-//   const sort = request.query.sort || "newest";
+  const lang = request.headers.lang || "en";
+  const categoryID = request.query.categoryID;
+  const page = parseInt(request.query.page) || 1;
+  const limit = parseInt(request.query.limit) || 10;
+  const sort = request.query.sort || "newest";
 
-//   //range of category
-//   const maxHeightRange = await ProductSchema.findOne().sort({'height.en':-1}).select('height.en')
-//   const maxDepthRange = await ProductSchema.findOne().sort({'depth.en':-1}).select('depth.en')
-//   const minHeightRange = await ProductSchema.findOne().sort({'height.en':1}).select('height.en')
-//   const minDepthRange = await ProductSchema.findOne().sort({'depth.en':1}).select('depth.en')
+  // //range of category
+  // const maxHeightRange = await Product.findOne().sort({'height.en':-1}).select('height.en')
+  // const maxDepthRange = await Product.findOne().sort({'depth.en':-1}).select('depth.en')
+  // const minHeightRange = await Product.findOne().sort({'height.en':1}).select('height.en')
+  // const minDepthRange = await Product.findOne().sort({'depth.en':1}).select('depth.en')
 
-//   //filters in eng only
-//   const minDepth = request.query.minDepth || minDepthRange.depth.en;
-//   const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
-//   const minHeight = request.query.minHeight || minHeightRange.height.en;
-//   const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
-//   const style = request.query.style || ""
-//   const style_ar = request.query.style_ar || ""
+  // //filters in eng only
+  // const minDepth = request.query.minDepth || minDepthRange.depth.en;
+  // const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
+  // const minHeight = request.query.minHeight || minHeightRange.height.en;
+  // const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
+  
+  const style = request.query.style || ""
+  const style_ar = request.query.style_ar || ""
 
-//   let query = {
-//     category_id: categoryID,
-//      [`height.en`]: { $gte: parseInt(minHeight), $lte: parseInt(maxHeight) } , 
-//      [`depth.en`]: { $gte: parseInt(minDepth), $lte: parseInt(maxDepth) } ,
-//   };
+  let whereClause = {
+    category_id: categoryID,
+  };
 
-//   let orConditions = [];
+  let orConditions = [];
 
-// if (style) {
-//   orConditions.push({ "style.en": style });
-// }
+if (style) {
+  orConditions.push({ "style.en": style });
+}
 
-// if (style_ar) {
-//   orConditions.push({ "style.ar": style_ar });
-// }
+if (style_ar) {
+  orConditions.push({ "style.ar": style_ar });
+}
 
-// if (orConditions.length > 0) {
-//   query.$or = orConditions;
-// }
+if (orConditions.length > 0) {
+  query.$or = orConditions;
+}
 
 
-//   const projection = {
-//      image: 1,
-//     [`price.${lang}`]: 1,
-//     [`description.${lang}`]: 1,
-//     [`name.${lang}`]: 1,
-//     [`material.${lang}`]: 1,
-//     [`height.${lang}`]: 1,
-//     [`depth.${lang}`]: 1,
-//     [`style.${lang}`]: 1,
-//   };
+const order = [];
+switch (sort) {
+  case 'newest':
+    order.push(['createdAt', 'DESC']);
+    break;
+  case 'earliest':
+    order.push(['createdAt', 'ASC']);
+    break;
+  case 'price_dsec':
+    order.push([`multilingualData.${lang}.price`, 'DESC']);
+    break;
+  case 'price_asec':
+    order.push([`multilingualData.${lang}.price`, 'ASC']);
+    break;
+  default:
+    order.push(['createdAt', 'DESC']);
+}
 
-//   let sortObj = {};
-//   switch (sort) {
-//     case "newest":
-//       sortObj = { createdAt: -1 };
-//       break;
-//     case "earliest":
-//       sortObj = { createdAt: 1 };
-//       break;
-//     case "price_dsec":
-//       sortObj = { [`price.${lang}`]: -1 };
-//       break;
-//     case "price_asec":
-//       sortObj = { [`price.${lang}`]: 1 };
-//       break;
-//     default:
-//       sortObj = { createdAt: -1 };
-//   }
+  const attributes = ['id','name','multilingualData', 'image'];
 
-//   const options = {
-//     page: parseInt(request.query.page) || 1,
-//     limit: parseInt(request.query.limit) || 10,
-//     sort: sortObj , 
-//     select: projection 
-//   };
+  const { docs, pages, total } = await Product.paginate({
+    where: whereClause,
+    attributes,
+    page,
+    paginate: limit,
+    order,
+  });
 
-//   const data = await ProductSchema.paginate(query, options);  
+  const data = docs.map(item => {
+    const { multilingualData, ...userData } = item.toJSON();
+    const { depth, price, style, height,material,description } = lang === 'en' ? multilingualData.en : multilingualData.ar;
 
-//   const metadata = {maxHeight, maxDepth, minHeight, minDepth };
-//   response.status(200).json({data,metadata});
-// });
+    return {
+      ...userData,
+      depth, price, style, height,material,description 
+    };
+  });
+
+  response.status(200).json({
+    products: data,
+    currentPage: page,
+    totalPages: pages,
+    totalProducts: total,
+  });
+
+});
  
 
-// exports.searchProducts = catchAsync(async (req, res, next) => {
-//   const searchQuery = req.query.searchkey || "";
-//   const lang = req.headers.lang || "en";
+exports.searchProducts = catchAsync(async (req, res, next) => {
+  const searchQuery = req.query.searchkey || "";
+  const lang = req.headers.lang || "en";
 
-//   let query = {
-//     $or: []
-//   };
+  let query = {
+    $or: []
+  };
 
-//   const fieldsToSearch = [
-//     "name"
-//   ];
+  const fieldsToSearch = [
+    "name"
+  ];
 
-//   fieldsToSearch.forEach(field => {
-//     const fieldQuery = {};
+  fieldsToSearch.forEach(field => {
+    const fieldQuery = {};
 
-//     if (lang === "en") {
-//       fieldQuery[`${field}.en`] = { $regex: searchQuery, $options: "i" };
-//     } else {
-//       fieldQuery[`${field}.ar`] = { $regex: searchQuery, $options: "i" };
-//     }
+    if (lang === "en") {
+      fieldQuery[`${field}.en`] = { $regex: searchQuery, $options: "i" };
+    } else {
+      fieldQuery[`${field}.ar`] = { $regex: searchQuery, $options: "i" };
+    }
 
-//     query.$or.push(fieldQuery);
-//   });
+    query.$or.push(fieldQuery);
+  });
 
-//   const projection = {
-//     main_image: 1
-//   };
+  const projection = {
+    main_image: 1
+  };
 
-//   if (lang === "en") {
-//     fieldsToSearch.forEach(field => {
-//       projection[`${field}.en`] = 1;
-//     });
-//   } else {
-//     fieldsToSearch.forEach(field => {
-//       projection[`${field}.ar`] = 1;
-//     });
-//   }
+  if (lang === "en") {
+    fieldsToSearch.forEach(field => {
+      projection[`${field}.en`] = 1;
+    });
+  } else {
+    fieldsToSearch.forEach(field => {
+      projection[`${field}.ar`] = 1;
+    });
+  }
 
-//   const data = await ProductSchema.find(query).select(projection);
+  const data = await ProductSchema.find(query).select(projection);
 
-//   if (data.length === 0) {
-//     return next(new AppError(`There are no matched results for your search.`, 400));
-//   }
+  if (data.length === 0) {
+    return next(new AppError(`There are no matched results for your search.`, 400));
+  }
 
-//   res.status(200).json(data);
-// });
+  res.status(200).json(data);
+});
 

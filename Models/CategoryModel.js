@@ -1,4 +1,5 @@
 const { DataTypes } = require("sequelize");
+const SequelizePaginate = require('sequelize-paginate');
 const sequelize = require("../utils/dbConfig");
 const Product = require("./ProductModel"); 
 
@@ -19,6 +20,7 @@ const Category = sequelize.define(
 
 Category.hasMany(Product, { foreignKey: 'category_id', as: 'products' });
 
+SequelizePaginate.paginate(Category);
 module.exports = Category;
 
    
