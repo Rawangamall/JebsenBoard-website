@@ -22,5 +22,5 @@ router.route("/category/:id")
 router.route("/website/category/:id/")
         .get(CategoryController.getCategory)
 
-        
+
 module.exports=router;

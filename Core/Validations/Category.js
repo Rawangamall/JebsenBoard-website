@@ -26,7 +26,7 @@ exports.CategoryValidPOST = [
   body("name_ar").notEmpty().withMessage("اسم المنتج مطلوب")
   .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
   .custom(async (value, { req }) => {
-        console.log(value)
+        console.log(value , "valuee")
 
     const productNameExists = await checkIfCategoryNameExists(value, "ar" );
     if (productNameExists) {
@@ -36,7 +36,7 @@ exports.CategoryValidPOST = [
   }),
 
   body("name_en").notEmpty().withMessage("اسم المنتج مطلوب")
-  .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
+.isString().withMessage("يجب أن يكون اسم المنتج نصًا")
   .custom(async (value, { req }) => {
     console.log(value)
     const productNameExists = await checkIfCategoryNameExists(value, "en");
@@ -46,7 +46,6 @@ exports.CategoryValidPOST = [
     return true;
   }),
 
-  // body("image").notEmpty().isString().withMessage("The image is required"),
 
 ];
 
