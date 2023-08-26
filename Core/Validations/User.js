@@ -1,5 +1,6 @@
 const { body , validationResult} = require("express-validator");
 const User = require("./../../Models/UserModel");
+const validRoles = ['ادمن', 'موظف'];
 
 exports.UserValidPOST = [
   body('firstName').isString().withMessage('الاسم الاول يجب ان يتكون من حروف'),
@@ -21,8 +22,15 @@ exports.UserValidPOST = [
         return Promise.reject('Phone number already in use - هذا الرقم مستخدم');
       }
     }),
-  body("role").isString().withMessage("يجب عليك ادخال النص بالعربي"),
-  body('password').isString().withMessage('يجب ادخال كلمه السر') 
+    body("role")
+    .isString().withMessage("يجب عليك ادخال النص بالعربي")
+    .custom((value) => {
+      if (!validRoles.includes(value)) {
+        return Promise.reject('Invalid role - دور غير صحيح');
+      }
+      return true;
+    }),
+      body('password').isString().withMessage('يجب ادخال كلمه السر') 
 
 ];
 
