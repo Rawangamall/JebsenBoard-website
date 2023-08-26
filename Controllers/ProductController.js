@@ -229,6 +229,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   // const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
   // const minHeight = request.query.minHeight || minHeightRange.height.en;
   // const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
+  
   const style = request.query.style || ""
   const style_ar = request.query.style_ar || ""
 

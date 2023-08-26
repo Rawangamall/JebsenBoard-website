@@ -19,7 +19,7 @@ exports.auth = catchAsync(async (req,res,next)=>{
 const decoded = await promisify(JWT.verify)(token,process.env.JWT_SECRET);
 
 //verify if the user of that token still exist
-
+console.log(decoded.id)
 const user = await User.findByPk(decoded.id);
 
 if(!user){

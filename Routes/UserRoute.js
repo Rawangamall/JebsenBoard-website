@@ -6,11 +6,11 @@ const validationData = require("./../Core/Validations/User")
 const imageData = require("./../Core/Validations/imageValidations")
 const validationMW = require("./../Core/Validations/validateMW")
 
-// const AuthenticationMW = require("./../Middlewares/authenticationMW")
+ const AuthenticationMW = require("./../Middlewares/authenticationMW")
 // const AuthorizationMW = require("./../Middlewares/authorizationMW")
 
 router.route("/users")
-      .get(userController.getAllUsers) //AuthenticationMW.auth,
+      .get(AuthenticationMW.auth,userController.getAllUsers) //AuthenticationMW.auth,
       .post(validationData.UserValidPOST,validationMW,userController.addUser) //AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
 
 router.route("/user/:_id")
