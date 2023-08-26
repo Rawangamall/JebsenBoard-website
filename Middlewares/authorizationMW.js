@@ -37,7 +37,7 @@ exports.authorize = (permissionRoles) => async (req, res, next) => {
 
     console.log(role,permissionRoles )
     // Check if the user has permissions for the specific model and permission
-    if (role === 'admin' || permissionRoles.includes(role)) {
+    if ( permissionRoles.includes(role)) {
       // User is authorized to access the endpoint
       next();
     } else {
