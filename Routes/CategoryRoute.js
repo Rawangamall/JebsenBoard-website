@@ -3,8 +3,8 @@ const router=express.Router();
 
 const CategoryController=require("./../Controllers/CategoryController");
 const {CategoryValidPOST,CategoryValidPUT} = require("./../Core/Validations/Category")
-const AuthenticationMW = require("./../Middlewares/authenticationMW")
-// const AuthorizationMW = require("./../Middlewares/authorizationMW")
+const {auth} = require("./../Middlewares/authenticationMW")
+const {authorize} = require("./../Middlewares/authorizationMW")
 const validationMW = require("./../Core/Validations/validateMW")
 const {removeCategoryIMG ,categoryImageUpload} = require("./../Core/Validations/imageValidations")
 
@@ -12,11 +12,11 @@ const {removeCategoryIMG ,categoryImageUpload} = require("./../Core/Validations/
 
 router.route("/category")
         .get(CategoryController.getAll)
-        .post( CategoryValidPOST ,categoryImageUpload ,validationMW ,CategoryController.addCategory)//AuthenticationMW.auth,
+        .post(auth,authorize("ادمن"), CategoryValidPOST ,categoryImageUpload ,validationMW ,CategoryController.addCategory)
 
 router.route("/category/:id")
         .get(CategoryController.getCategory)
-        .patch(CategoryValidPUT, categoryImageUpload,validationMW, CategoryController.updateCategory)//AuthenticationMW.auth,
+        .patch(CategoryValidPUT,validationMW,categoryImageUpload, CategoryController.updateCategory)//AuthenticationMW.auth,
         .delete(removeCategoryIMG, CategoryController.deleteCategory)//AuthenticationMW.auth,validationMW ,
 
 
