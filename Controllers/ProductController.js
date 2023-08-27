@@ -8,7 +8,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const lang = req.headers.lang || "en";
+    const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
     const offset = (page - 1) * limit;
 
@@ -20,16 +20,21 @@ exports.getAll = catchAsync(async (req, res, next) => {
     if (products.length === 0) {
       return next(new AppError('لم يتم العثور على أي منتج', 404));
     }
-
-    const modifiedProducts = products.map(product => {
+   
+    let modifiedProducts;
+    if(lang === 'en' || lang === 'ar')
+    {
+        modifiedProducts = products.map(product => {
       const plainProduct = product.get({ plain: true });
       return {
         ...plainProduct,
         multilingualData: plainProduct.multilingualData[lang]
       };
     });
+    }
+   
 
-    res.status(200).json(modifiedProducts);
+    res.status(200).json(modifiedProducts? modifiedProducts : products);
   } catch (error) {
     console.error('خطأ في جلب المنتجات:', error);
     next(error);
@@ -84,8 +89,9 @@ exports.addProduct = catchAsync(async (request, response, next) => {
 
 exports.getProduct = catchAsync(async (req, res, next) => {
   try {
+
     const productId = req.params.id;
-    const lang = req.headers.lang;
+  const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
     const product = await Product.findByPk(productId);
 
@@ -102,25 +108,38 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     });
 
     // Modify the relatedProducts based on language condition
-    const modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
+    let modifiedRelatedProducts ;
+    if(lang === 'en' || lang === 'ar') {
+     modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
         return {
           ...relatedProduct.get({ plain: true }),
           multilingualData: relatedProduct.multilingualData[lang]
         };
      
     });
+  }
+  // else{
+  //    modifiedRelatedProducts = relatedProducts;
+  // }
 
-    const modifiedProducts = {
+  let modifiedProduct;
+
+  if(lang === "en" || lang === "ar")
+  {
+      modifiedProduct = {
       ...product.get({ plain: true }),
       multilingualData: product.multilingualData[lang]
     };
-
-
+  }
+  // else{
+  //   modifiedProduct = product;
+  // }
+  
     res.status(200).json({
       status: 'success',
       data: {
-        product: modifiedProducts,
-        relatedProducts: modifiedRelatedProducts
+        product:  modifiedProduct ? modifiedProduct : product,
+        relatedProducts: modifiedRelatedProducts ? modifiedRelatedProducts : relatedProducts
       }
     });
   } catch (error) {

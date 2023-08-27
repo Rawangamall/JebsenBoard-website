@@ -10,7 +10,8 @@ const path = require("path");
 const fs = require('fs');
 
 exports.getAll = catchAsync(async (req, res, next) => {
-  const lang = req.headers.lang || 'en'; // Default to English if no lang header is provided
+
+  const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
   const categories = await Category.findAll();
   if (!categories) return next(new AppError('لم يتم العثور على أي فئة', 404));
@@ -37,13 +38,25 @@ exports.getAll = catchAsync(async (req, res, next) => {
     }
 
     // Filter categories based on language
-    const localizedCategories = categoriesWithCounts.map(category => ({
+    let localizedCategories = [];
+    if(lang === null)
+    {
+       localizedCategories = categoriesWithCounts.map(category => ({
+        id: category.id,
+        name_ar: category.multilingualData.ar.name ,
+        name_en: category.multilingualData.en.name,
+        image: category.image,
+        productCount: category.dataValues.productCount || 0
+      }));
+    }
+    else{
+     localizedCategories = categoriesWithCounts.map(category => ({
       id: category.id,
       name: lang === 'ar' ? category.multilingualData.ar.name : category.multilingualData.en.name,
       image: category.image,
       productCount: category.dataValues.productCount || 0
     }));
-
+}
     res.status(200).json(localizedCategories);
   } catch (error) {
     next(error);

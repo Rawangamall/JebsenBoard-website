@@ -20,11 +20,13 @@ router.route("/product/search")
       .get(ProductController.searchProducts)
 
 router.route("/product/:id")
-      .get(auth ,authorize("ادمن","موظف"), ProductController.getProduct)
+      .get( ProductController.getProduct)
       .patch(auth,authorize("ادمن","موظف"),productImageUpload ,ProductValidPatch, validationMW, ProductController.updateProduct)
       .delete(auth,authorize("ادمن"),validationMW ,removeProductIMG,ProductController.deleteProduct)
 
-router.route("/website/product/:id")
-      .get(ProductController.getProduct)
+router.route("/dashboard/product/:id")
+      .get(auth ,authorize("ادمن","موظف"),ProductController.getProduct)
 
+router.route("/dashboard/products")
+      .get(auth ,authorize("ادمن","موظف"),ProductController.getAll)
 module.exports=router;

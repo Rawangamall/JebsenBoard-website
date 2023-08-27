@@ -22,5 +22,7 @@ router.route("/category/:id")
 router.route("/dashboard/category/:id/")
         .get(auth,authorize("ادمن","موظف"),CategoryController.getCategory)
 
+router.route("/dashboard/category")
+        .get(auth,authorize("ادمن","موظف"),CategoryController.getAll)
 
 module.exports=router;
