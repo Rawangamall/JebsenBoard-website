@@ -118,38 +118,62 @@ exports.getCategory = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
-  const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
   const id = req.params.id;
 
-  const category = await Category.findByPk(id, { attributes });
-  if (!category) return next(new AppError('لم يتم العثور على أي فئة', 404));
+  try {
+    const category = await Category.findByPk(id);
+    if (!category) {
+      return next(new AppError('لم يتم العثور على أي فئة', 404));
+    }
 
-  if (req.body.name_en) {
-    const categoryExist = await Category.findAll({
-      where: {
-        "multilingualData.en.name": req.body.name_en
+    const updatedMultilingualData = { ...category.multilingualData };
+
+    if (req.body.name_en) {
+      const categoryExist = await Category.findOne({
+        where: {
+          "multilingualData.en.name": req.body.name_en
+        }
+      });
+      if (categoryExist && categoryExist.id !== category.id) {
+        return next(new AppError('الفئة موجودة بالفعل', 400));
       }
-    });
-    if (categoryExist.length > 0) return next(new AppError('الفئة موجودة بالفعل', 400));
+      updatedMultilingualData.en.name = req.body.name_en;
+    }
 
-    category.multilingualData.en.name = req.body.name_en;
-  }
-  if (req.body.name_ar) {
-    const categoryExist = await Category.findAll({
-      where: {
-        "multilingualData.ar.name": req.body.name_ar
+    if (req.body.name_ar) {
+      const categoryExist = await Category.findOne({
+        where: {
+          "multilingualData.ar.name": req.body.name_ar
+        }
+      });
+      if (categoryExist && categoryExist.id !== category.id) {
+        return next(new AppError('الفئة موجودة بالفعل', 400));
       }
-    });
-    if (categoryExist.length > 0) return next(new AppError('الفئة موجودة بالفعل', 400));
-    category.multilingualData.ar.name = req.body.name_ar;
-  }
-  if (req.file) {
-    category.image = req.file.originalname;
-  }
+      updatedMultilingualData.ar.name = req.body.name_ar;
+    }
 
-  const updatedDocument = await category.save();
-  res.status(200).json(updatedDocument);
+    if (req.file) {
+      category.image = req.file.originalname;
+    }
+
+    // Create a new category object with the updated data
+    const updatedCategory = {
+      ...category.toJSON(),
+      multilingualData: updatedMultilingualData
+    };
+
+    // Update the category in the database
+    await Category.update(updatedCategory, {
+      where: { id }
+    });
+
+    res.status(200).json(updatedCategory);
+  } catch (error) {
+    next(error);
+  }
 });
+
+
 
 exports.deleteCategory = catchAsync(async (req, res, next) => {
   try {

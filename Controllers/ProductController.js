@@ -130,60 +130,93 @@ exports.getProduct = catchAsync(async (req, res, next) => {
 
 
 
-
-
-
-
 exports.updateProduct = catchAsync(async (req, res, next) => {
- 
-    const id = req.params.id;
+  const id = req.params.id;
 
+  try {
     const product = await Product.findByPk(id);
 
-    if (!product) return next(new AppError('لم يتم العثور على المنتج', 404));
+    if (!product) {
+      return next(new AppError('لم يتم العثور على المنتج', 404));
+    }
 
+    const updatedMultilingualData = { ...product.multilingualData };
 
     const category_id = req.body.category_id;
-    if(category_id)
-    {
-       const category = await Category.findByPk(category_id);
+    if (category_id) {
+      const category = await Category.findByPk(category_id);
 
-        if (!category) {
-          return next(new AppError('لم يتم العثور على الفئة', 404));
-        }
+      if (!category) {
+        return next(new AppError('لم يتم العثور على الفئة', 404));
+      }
     }
 
-    if(req.body.name)
-    {
-
+    if (req.body.name) {
       product.name = req.body.name;
     }
-   
-    if(req.file)
-    {
-      image= req.file.originalname || product.image;
-      product.image =image;
-    }
-    if(req.body.description)product.multilingualData.en.description = req.body.description;
-    if(req.body.description_ar)product.multilingualData.ar.description = req.body.description_ar;
-    if(req.body.height) product.multilingualData.en.height = req.body.height;
-    if(req.body.height_ar) product.multilingualData.ar.height = req.body.height_ar;
-    if(req.body.depth)  product.multilingualData.en.depth = req.body.depth;
-    if(req.body.depth_ar) product.multilingualData.ar.depth = req.body.depth_ar;
-    if(req.body.material)  product.multilingualData.en.material = req.body.material;
-    if(req.body.material_ar) product.multilingualData.ar.material = req.body.material_ar;
-    if(req.body.price)  product.multilingualData.en.price = req.body.price;
-    if(req.body.price_ar) product.multilingualData.ar.price = req.body.price_ar;
-    if(req.body.category_id) product.category_id = req.body.category_id;
-    if(req.body.style)  product.multilingualData.en.style = req.body.style;
-    if(req.body.style_ar) product.multilingualData.ar.style = req.body.style_ar;
-    await product.save();
 
-    res.status(200).json(product);
-     
-    
+    if (req.file) {
+      image = req.file.originalname || product.image;
+      product.image = image;
+    }
+
+    if (req.body.description) {
+      updatedMultilingualData.en.description = req.body.description;
+    }
+    if (req.body.description_ar) {
+      updatedMultilingualData.ar.description = req.body.description_ar;
+    }
+    if (req.body.height) {
+      updatedMultilingualData.en.height = req.body.height;
+    }
+    if (req.body.height_ar) {
+      updatedMultilingualData.ar.height = req.body.height_ar;
+    }
+    if (req.body.depth) {
+      updatedMultilingualData.en.depth = req.body.depth;
+    }
+    if (req.body.depth_ar) {
+      updatedMultilingualData.ar.depth = req.body.depth_ar;
+    }
+    if (req.body.material) {
+      updatedMultilingualData.en.material = req.body.material;
+    }
+    if (req.body.material_ar) {
+      updatedMultilingualData.ar.material = req.body.material_ar;
+    }
+    if (req.body.price) {
+      updatedMultilingualData.en.price = req.body.price;
+    }
+    if (req.body.price_ar) {
+      updatedMultilingualData.ar.price = req.body.price_ar;
+    }
+    if (req.body.category_id) {
+      product.category_id = req.body.category_id;
+    }
+    if (req.body.style) {
+      updatedMultilingualData.en.style = req.body.style;
+    }
+    if (req.body.style_ar) {
+      updatedMultilingualData.ar.style = req.body.style_ar;
+    }
+
+    // Create a new product object with the updated data
+    const updatedProduct = {
+      ...product.toJSON(),
+      multilingualData: updatedMultilingualData
+    };
+
+    // Update the product in the database
+    await Product.update(updatedProduct, {
+      where: { id }
+    });
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    next(error);
   }
-);
+});
+
 
 exports.deleteProduct = catchAsync(async (req, res, next) => {
   const productId = req.params.id; // Get the product ID from the request
