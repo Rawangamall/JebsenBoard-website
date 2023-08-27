@@ -81,7 +81,7 @@ exports.addCategory = catchAsync(async (request, response, next) => {
 });
 
 exports.getCategory = catchAsync(async (req, res, next) => {
-  const lang = req.originalUrl.toLowerCase().includes('website') ? null : req.headers.lang || 'en';
+  const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
   console.log("lang",lang)
   const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
@@ -100,14 +100,30 @@ exports.getCategory = catchAsync(async (req, res, next) => {
     createdAt
   };
 
-  if (lang === 'ar' || lang === null) {
+  // if (lang === 'ar' || lang === null) {
+  //   categoryData.name_ar = name_ar;
+  // }
+
+  // if (lang === 'en' || lang === null) {
+  //   categoryData.name_en = name_en;
+  // }
+
+  if(lang === null)
+  {
     categoryData.name_ar = name_ar;
-  }
-
-  if (lang === 'en' || lang === null) {
     categoryData.name_en = name_en;
+    console.log("categoryDataname_en",categoryData.name_en)
+  }
+  else if(lang === 'ar')
+  {
+    categoryData.name = name_ar;
+  }
+  else if(lang === 'en')
+  {
+    categoryData.name = name_en;
   }
 
+  console.log("categoryData",categoryData)
   const productsCount = await Product.count({
     where: { category_id: id }
   });

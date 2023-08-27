@@ -15,12 +15,12 @@ router.route("/category")
         .post(auth,authorize("ادمن","موظف") ,categoryImageUpload ,CategoryValidPOST,validationMW ,CategoryController.addCategory)
 
 router.route("/category/:id")
-        .get(auth,authorize("ادمن","موظف"),CategoryController.getCategory)
+        .get(CategoryController.getCategory)
         .patch(auth,authorize("ادمن") , categoryImageUpload ,CategoryValidPUT,validationMW, CategoryController.updateCategory)
         .delete(auth,authorize("ادمن") ,removeCategoryIMG, CategoryController.deleteCategory)
 
-router.route("/website/category/:id/")
-        .get(CategoryController.getCategory)
+router.route("/dashboard/category/:id/")
+        .get(auth,authorize("ادمن","موظف"),CategoryController.getCategory)
 
 
 module.exports=router;
