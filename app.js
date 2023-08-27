@@ -27,10 +27,16 @@ sequelize.sync({ force: false })
     console.error('Error syncing database:', err);
   });
 
+server.use(
+    cors({
+      origin: "*",
+    })
+  );
+
 //body parse
 server.use(express.json());
 server.use(express.urlencoded({extended:false}));
-// server.use(bodyParser.json())
+//server.use(bodyParser.json())
 
 server.use('image', express.static(path.join(__dirname, 'Core/images')));
 

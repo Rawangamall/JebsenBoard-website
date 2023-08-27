@@ -8,6 +8,7 @@ exports.UserValidPOST = [
   body('email')
   .isEmail().withMessage('يجب ادخال الايميل الصحيح')
   .custom(async (value) => {
+    console.log(value)
       const user = await User.findOne({ where: { email: value } });
       if (user) {
         return Promise.reject('Email already in use - هذا الايميل مستخدم');

@@ -7,6 +7,8 @@ const { Op } = require('sequelize');
 
 const Product = require("./../../Models/ProductModel");
 const Category = require("./../../Models/CategoryModel");
+const User = require("./../../Models/UserModel");
+
 // delete require.cache[require.resolve('./../../models/ProductModel')];
 
 const AppError = require("./../../utils/appError");
@@ -59,10 +61,12 @@ exports.addIMG = multer({
 }).single("image");
 
 exports.removeUserIMG = function (req, res, next) {
-  UserSchema.findOne({ _id: req.params._id }).then((data) => {
-    if (data != null && data.image != "default.jpg") {
-      imageName = data._id + "." + "jpg";
+  const id = req.params._id;
 
+  User.findByPk(id).then((data) => {
+    if (data != null && data.image != "default.jpg") {
+      imageName = data.id + "." + "jpg";
+     console.log(imageName)
       fs.unlink(
         path.join(__dirname, "..", "images", "User", imageName),
         function (err) {

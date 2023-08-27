@@ -12,7 +12,10 @@ const {removeCategoryIMG ,categoryImageUpload} = require("./../Core/Validations/
 
 router.route("/category")
         .get(CategoryController.getAll)
-        .post(auth,authorize("ادمن"), CategoryValidPOST ,categoryImageUpload ,validationMW ,CategoryController.addCategory)
+        .post(auth,authorize("ادمن"), categoryImageUpload,(req, res, next) => {
+                console.log(req.body , "body");
+                next(); 
+              }, CategoryValidPOST ,validationMW ,CategoryController.addCategory)
 
 router.route("/category/:id")
         .get(CategoryController.getCategory)
