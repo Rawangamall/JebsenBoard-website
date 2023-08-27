@@ -16,8 +16,8 @@ router.route("/category")
 
 router.route("/category/:id")
         .get(auth,authorize("ادمن","موظف"),CategoryController.getCategory)
-        .patch(auth,authorize("ادمن") , categoryImageUpload ,CategoryValidPUT,validationMW, CategoryController.updateCategory)//AuthenticationMW.auth,
-        .delete(auth,authorize("ادمن") ,removeCategoryIMG, CategoryController.deleteCategory)//AuthenticationMW.auth,validationMW ,
+        .patch(auth,authorize("ادمن") , categoryImageUpload ,CategoryValidPUT,validationMW, CategoryController.updateCategory)
+        .delete(auth,authorize("ادمن") ,removeCategoryIMG, CategoryController.deleteCategory)
 
 router.route("/website/category/:id/")
         .get(CategoryController.getCategory)

@@ -1,12 +1,8 @@
-// const Product = require("../Models/ProductModel");
-// const Category = require("../Models/CategoryModel");
 const { Op } = require('sequelize');
 const { Category, Product } = require('./../Models/associateModel');
 
-
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
-// const { paginateSubDocs } = require("mongoose-paginate-v2");
 
 exports.getAll = catchAsync(async (req, res, next) => {
   try {
@@ -22,7 +18,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
     });
 
     if (products.length === 0) {
-      return next(new AppError('No product found', 404));
+      return next(new AppError('لم يتم العثور على أي منتج', 404));
     }
 
     const modifiedProducts = products.map(product => {
@@ -35,60 +31,55 @@ exports.getAll = catchAsync(async (req, res, next) => {
 
     res.status(200).json(modifiedProducts);
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('خطأ في جلب المنتجات:', error);
     next(error);
   }
 });
 
-
 exports.addProduct = catchAsync(async (request, response, next) => {
-
-    const category_id = request.body.category_id;
+  const category_id = request.body.category_id;
     
-    const category = await Category.findByPk(category_id);
+  const category = await Category.findByPk(category_id);
 
-		if (!category) {
-			return next(new AppError(`Category not found`, 401));
-		}
+  if (!category) {
+    return next(new AppError(`الفئة غير موجودة`, 401));
+  }
 
-    //check if the product name is already exist
-    if(! request.file) return next(new AppError(`يرجي ادخال صوره`, 401));
-    const originalFileName = request.file.originalname; 
-    const fileNameWithoutExtension = originalFileName.replace(/\.[^.]*$/, '');
-    const Name = request.body.name ? request.body.name  : fileNameWithoutExtension;
+  if (!request.file) return next(new AppError(`يرجى إدخال صورة`, 401));
+  const originalFileName = request.file.originalname; 
+  const fileNameWithoutExtension = originalFileName.replace(/\.[^.]*$/, '');
+  const Name = request.body.name ? request.body.name : fileNameWithoutExtension;
 
-    const productNameExist = await Product.findAll({ where: { name: Name} });
-    // console.log("productExist",productNameExist);
-    if (productNameExist.length > 0)  return next(new AppError(`Product name already exist`, 401));
+  const productNameExist = await Product.findAll({ where: { name: Name} });
+  if (productNameExist.length > 0) return next(new AppError(`اسم المنتج موجود بالفعل`, 401));
 
-    const newProduct = await Product.create ({
-      name:Name,
-      multilingualData:{
-        en:{
-          description:request.body.description,
-          height:request.body.height,
-          depth:request.body.depth,
-          material:request.body.material,
-          style:request.body.style,
-          price:request.body.price,
-        },
-        ar:{
-          description:request.body.description_ar,
-          height:request.body.height_ar,
-          depth:request.body.depth_ar,
-          material:request.body.material_ar,
-          style:request.body.style_ar,
-          price:request.body.price_ar,
-        }
+  const newProduct = await Product.create ({
+    name: Name,
+    multilingualData: {
+      en: {
+        description: request.body.description,
+        height: request.body.height,
+        depth: request.body.depth,
+        material: request.body.material,
+        style: request.body.style,
+        price: request.body.price,
+      },
+      ar: {
+        description: request.body.description_ar,
+        height: request.body.height_ar,
+        depth: request.body.depth_ar,
+        material: request.body.material_ar,
+        style: request.body.style_ar,
+        price: request.body.price_ar,
       }
-      ,
-      category_id: request.body.category_id,
-      image: request.file.originalname ,
-    });
-    
-    response.status(200).json(newProduct);
-  
+    },
+    category_id: request.body.category_id,
+    image: request.file.originalname ,
+  });
+
+  response.status(200).json(newProduct);
 });
+
 
 
 exports.getProduct = catchAsync(async (req, res, next) => {
@@ -99,7 +90,7 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     const product = await Product.findByPk(productId);
 
     if (!product) {
-      return next(new AppError('No product found', 404));
+      return next(new AppError('لم يتم العثور على منتج', 404));
     }
 
     const relatedProducts = await Product.findAll({
@@ -149,7 +140,8 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 
     const product = await Product.findByPk(id);
 
-    if (!product) return next(new AppError("product not found", 404));
+    if (!product) return next(new AppError('لم يتم العثور على المنتج', 404));
+
 
     const category_id = req.body.category_id;
     if(category_id)
@@ -157,7 +149,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
        const category = await Category.findByPk(category_id);
 
         if (!category) {
-          return next(new AppError("category not found", 404));
+          return next(new AppError('لم يتم العثور على الفئة', 404));
         }
     }
 
@@ -199,13 +191,12 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
   try {
     const product = await Product.findByPk(productId); // Find the product by its ID
     if (!product) {
-      return next(new AppError('No record found', 404));
+      return next(new AppError('لم يتم العثور على المنتج', 404));
     }
 console.log("product",product);
     await product.destroy(); // Delete the product
-    res.status(200).json({ message: 'Product deleted successfully' });
+    res.status(200).json({ message: 'تم حذف المنتج بنجاح' });
   } catch (error) {
-    console.error('Error deleting product:', error);
     next(error);
   }
 });
