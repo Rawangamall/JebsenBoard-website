@@ -81,41 +81,46 @@ exports.addCategory = catchAsync(async (request, response, next) => {
 });
 
 exports.getCategory = catchAsync(async (req, res, next) => {
-  const lang = req.headers.lang || "en";
+  const lang = req.originalUrl.toLowerCase().includes('website') ? null : req.headers.lang || 'en';
+
+  console.log("lang",lang)
   const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
   const id = req.params.id;
-
+  
   const category = await Category.findByPk(id, { attributes });
   if (!category) return next(new AppError('لم يتم العثور على أي فئة', 404));
-
+  
   const { multilingualData, image, updatedAt, createdAt } = category.toJSON();
+  const  name_en = multilingualData.en.name;
+  const  name_ar = multilingualData.ar.name;
 
-  const { name, description, height, depth, material, style, price } = lang === 'en' ? multilingualData.en : multilingualData.ar;
-  const categoryData = {
-    name,
-    description,
-    height,
-    depth,
-    material,
-    style,
-    price,
+  let categoryData = {
     image,
     updatedAt,
     createdAt
   };
+
+  if (lang === 'ar' || lang === null) {
+    categoryData.name_ar = name_ar;
+  }
+
+  if (lang === 'en' || lang === null) {
+    categoryData.name_en = name_en;
+  }
 
   const productsCount = await Product.count({
     where: { category_id: id }
   });
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     data: {
       categoryData,
       productsCount
     }
   });
 });
+
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
   const id = req.params.id;
