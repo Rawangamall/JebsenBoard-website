@@ -1,18 +1,14 @@
-// const Product = require("../Models/ProductModel");
-// const Category = require("../Models/CategoryModel");
-const { Op , sequelize} = require('sequelize');
+const { Op } = require('sequelize');
 const { Category, Product } = require('./../Models/associateModel');
-
 
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
-// const { paginateSubDocs } = require("mongoose-paginate-v2");
 
 exports.getAll = catchAsync(async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const lang = req.headers.lang || "en";
+    const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
     const offset = (page - 1) * limit;
 
@@ -22,83 +18,85 @@ exports.getAll = catchAsync(async (req, res, next) => {
     });
 
     if (products.length === 0) {
-      return next(new AppError('No product found', 404));
+      return next(new AppError('لم يتم العثور على أي منتج', 404));
     }
-
-    const modifiedProducts = products.map(product => {
+   
+    let modifiedProducts;
+    if(lang === 'en' || lang === 'ar')
+    {
+        modifiedProducts = products.map(product => {
       const plainProduct = product.get({ plain: true });
       return {
         ...plainProduct,
         multilingualData: plainProduct.multilingualData[lang]
       };
     });
+    }
+   
 
-    res.status(200).json(modifiedProducts);
+    res.status(200).json(modifiedProducts? modifiedProducts : products);
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('خطأ في جلب المنتجات:', error);
     next(error);
   }
 });
 
-
 exports.addProduct = catchAsync(async (request, response, next) => {
-
-    const category_id = request.body.category_id;
+  const category_id = request.body.category_id;
     
-    const category = await Category.findByPk(category_id);
+  const category = await Category.findByPk(category_id);
 
-		if (!category) {
-			return next(new AppError(`Category not found`, 401));
-		}
+  if (!category) {
+    return next(new AppError(`الفئة غير موجودة`, 401));
+  }
 
-    //check if the product name is already exist
-    const originalFileName = request.file.originalname; 
-    const fileNameWithoutExtension = originalFileName.replace(/\.[^.]*$/, '');
-    const Name = request.body.name ? request.body.name  : fileNameWithoutExtension;
+  if (!request.file) return next(new AppError(`يرجى إدخال صورة`, 401));
+  const originalFileName = request.file.originalname; 
+  const fileNameWithoutExtension = originalFileName.replace(/\.[^.]*$/, '');
+  const Name = request.body.name ? request.body.name : fileNameWithoutExtension;
 
-    const productNameExist = await Product.findAll({ where: { name: Name} });
-    console.log("productExist",productNameExist);
-    if (productNameExist.limit > 0)  return next(new AppError(`Product name already exist`, 401));
+  const productNameExist = await Product.findAll({ where: { name: Name} });
+  if (productNameExist.length > 0) return next(new AppError(`اسم المنتج موجود بالفعل`, 401));
 
-    const newProduct = await Product.create ({
-      name:Name,
-      multilingualData:{
-        en:{
-          description:request.body.description,
-          height:request.body.height,
-          depth:request.body.depth,
-          material:request.body.material,
-          style:request.body.style,
-          price:request.body.price,
-        },
-        ar:{
-          description:request.body.description_ar,
-          height:request.body.height_ar,
-          depth:request.body.depth_ar,
-          material:request.body.material_ar,
-          style:request.body.style_ar,
-          price:request.body.price_ar,
-        }
+  const newProduct = await Product.create ({
+    name: Name,
+    multilingualData: {
+      en: {
+        description: request.body.description,
+        height: request.body.height,
+        depth: request.body.depth,
+        material: request.body.material,
+        style: request.body.style,
+        price: request.body.price,
+      },
+      ar: {
+        description: request.body.description_ar,
+        height: request.body.height_ar,
+        depth: request.body.depth_ar,
+        material: request.body.material_ar,
+        style: request.body.style_ar,
+        price: request.body.price_ar,
       }
-      ,
-      category_id: request.body.category_id,
-      image: request.file.originalname ,
-    });
-    
-    response.status(200).json(newProduct);
-  
+    },
+    category_id: request.body.category_id,
+    image: request.file.originalname ,
+  });
+
+  response.status(200).json(newProduct);
 });
+
 
 
 exports.getProduct = catchAsync(async (req, res, next) => {
   try {
+
     const productId = req.params.id;
-    const lang = req.headers.lang;
+  const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
     const product = await Product.findByPk(productId);
 
     if (!product) {
-      return next(new AppError('No product found', 404));
+      return next(new AppError('لم يتم العثور على منتج', 404));
     }
 
     const relatedProducts = await Product.findAll({
@@ -110,25 +108,38 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     });
 
     // Modify the relatedProducts based on language condition
-    const modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
+    let modifiedRelatedProducts ;
+    if(lang === 'en' || lang === 'ar') {
+     modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
         return {
           ...relatedProduct.get({ plain: true }),
           multilingualData: relatedProduct.multilingualData[lang]
         };
      
     });
+  }
+  // else{
+  //    modifiedRelatedProducts = relatedProducts;
+  // }
 
-    const modifiedProducts = {
+  let modifiedProduct;
+
+  if(lang === "en" || lang === "ar")
+  {
+      modifiedProduct = {
       ...product.get({ plain: true }),
       multilingualData: product.multilingualData[lang]
     };
-
-
+  }
+  // else{
+  //   modifiedProduct = product;
+  // }
+  
     res.status(200).json({
       status: 'success',
       data: {
-        product: modifiedProducts,
-        relatedProducts: modifiedRelatedProducts
+        product:  modifiedProduct ? modifiedProduct : product,
+        relatedProducts: modifiedRelatedProducts ? modifiedRelatedProducts : relatedProducts
       }
     });
   } catch (error) {
@@ -138,58 +149,93 @@ exports.getProduct = catchAsync(async (req, res, next) => {
 
 
 
-
-
-
-
 exports.updateProduct = catchAsync(async (req, res, next) => {
- 
-    const id = req.params.id;
+  const id = req.params.id;
 
+  try {
     const product = await Product.findByPk(id);
 
-    if (!product) return next(new AppError("product not found", 404));
+    if (!product) {
+      return next(new AppError('لم يتم العثور على المنتج', 404));
+    }
+
+    const updatedMultilingualData = { ...product.multilingualData };
 
     const category_id = req.body.category_id;
-    if(category_id)
-    {
-       const category = await Category.findByPk(category_id);
+    if (category_id) {
+      const category = await Category.findByPk(category_id);
 
-        if (!category) {
-          return next(new AppError("category not found", 404));
-        }
+      if (!category) {
+        return next(new AppError('لم يتم العثور على الفئة', 404));
+      }
     }
 
-    if(req.body.name)
-    {
+    if (req.body.name) {
       product.name = req.body.name;
     }
-   
-    if(req.file)
-    {
-      image= req.file.originalname || product.image;
-      product.image =image;
-    }
-    if(req.body.description)product.multilingualData.en.description = req.body.description;
-    if(req.body.description_ar)product.multilingualData.ar.description = req.body.description_ar;
-    if(req.body.height) product.multilingualData.en.height = req.body.height;
-    if(req.body.height_ar) product.multilingualData.ar.height = req.body.height_ar;
-    if(req.body.depth)  product.multilingualData.en.depth = req.body.depth;
-    if(req.body.depth_ar) product.multilingualData.ar.depth = req.body.depth_ar;
-    if(req.body.material)  product.multilingualData.en.material = req.body.material;
-    if(req.body.material_ar) product.multilingualData.ar.material = req.body.material_ar;
-    if(req.body.price)  product.multilingualData.en.price = req.body.price;
-    if(req.body.price_ar) product.multilingualData.ar.price = req.body.price_ar;
-    if(req.body.category_id) product.category_id = req.body.category_id;
-    if(req.body.style)  product.multilingualData.en.style = req.body.style;
-    if(req.body.style_ar) product.multilingualData.ar.style = req.body.style_ar;
-    await product.save();
 
-    res.status(200).json(product);
-     
-    
+    if (req.file) {
+      image = req.file.originalname || product.image;
+      product.image = image;
+    }
+
+    if (req.body.description) {
+      updatedMultilingualData.en.description = req.body.description;
+    }
+    if (req.body.description_ar) {
+      updatedMultilingualData.ar.description = req.body.description_ar;
+    }
+    if (req.body.height) {
+      updatedMultilingualData.en.height = req.body.height;
+    }
+    if (req.body.height_ar) {
+      updatedMultilingualData.ar.height = req.body.height_ar;
+    }
+    if (req.body.depth) {
+      updatedMultilingualData.en.depth = req.body.depth;
+    }
+    if (req.body.depth_ar) {
+      updatedMultilingualData.ar.depth = req.body.depth_ar;
+    }
+    if (req.body.material) {
+      updatedMultilingualData.en.material = req.body.material;
+    }
+    if (req.body.material_ar) {
+      updatedMultilingualData.ar.material = req.body.material_ar;
+    }
+    if (req.body.price) {
+      updatedMultilingualData.en.price = req.body.price;
+    }
+    if (req.body.price_ar) {
+      updatedMultilingualData.ar.price = req.body.price_ar;
+    }
+    if (req.body.category_id) {
+      product.category_id = req.body.category_id;
+    }
+    if (req.body.style) {
+      updatedMultilingualData.en.style = req.body.style;
+    }
+    if (req.body.style_ar) {
+      updatedMultilingualData.ar.style = req.body.style_ar;
+    }
+
+    // Create a new product object with the updated data
+    const updatedProduct = {
+      ...product.toJSON(),
+      multilingualData: updatedMultilingualData
+    };
+
+    // Update the product in the database
+    await Product.update(updatedProduct, {
+      where: { id }
+    });
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    next(error);
   }
-);
+});
+
 
 exports.deleteProduct = catchAsync(async (req, res, next) => {
   const productId = req.params.id; // Get the product ID from the request
@@ -197,13 +243,12 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
   try {
     const product = await Product.findByPk(productId); // Find the product by its ID
     if (!product) {
-      return next(new AppError('No record found', 404));
+      return next(new AppError('لم يتم العثور على المنتج', 404));
     }
 console.log("product",product);
     await product.destroy(); // Delete the product
-    res.status(200).json({ message: 'Product deleted successfully' });
+    res.status(200).json({ message: 'تم حذف المنتج بنجاح' });
   } catch (error) {
-    console.error('Error deleting product:', error);
     next(error);
   }
 });

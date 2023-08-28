@@ -8,16 +8,16 @@ const validationData = require("./../Core/Validations/User")
 const imageData = require("./../Core/Validations/imageValidations")
 const validationMW = require("./../Core/Validations/validateMW")
 
- const AuthenticationMW = require("./../Middlewares/authenticationMW")
-// const AuthorizationMW = require("./../Middlewares/authorizationMW")
+ const {auth} = require("./../Middlewares/authenticationMW")
+const {authorize} = require("./../Middlewares/authorizationMW")
 
 router.route("/users")
-      .get(AuthenticationMW.auth,userController.getAllUsers) //AuthenticationMW.auth,
-      .post(AuthenticationMW.auth,upload.none(),validationData.UserValidPOST,validationMW,userController.addUser) //AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
+      .get(auth,authorize("ادمن"),userController.getAllUsers) //AuthenticationMW.auth,
+      .post(auth,authorize("ادمن"),upload.none(),validationData.UserValidPOST,validationMW,userController.addUser) //AuthenticationMW.auth,AuthorizationMW.authorize("admin"),
 
 router.route("/user/:_id")
-      .get(AuthenticationMW.auth,userController.getUser)  
-      .patch(AuthenticationMW.auth,validationData.UserValidPATCH,validationMW,imageData.addIMG,userController.editUser) //AuthorizationMW.authorize("admin"),
-      .delete(AuthenticationMW.auth,imageData.removeUserIMG,userController.delUser) //AuthorizationMW.authorize("admin"),
+      .get(auth,authorize("ادمن","موظف"),userController.getUser)  
+      .patch(auth,authorize("ادمن","موظف"),validationData.UserValidPATCH,validationMW,imageData.addIMG,userController.editUser) //AuthorizationMW.authorize("admin"),
+      .delete(auth,authorize("ادمن"),imageData.removeUserIMG,userController.delUser) //AuthorizationMW.authorize("admin"),
 
 module.exports=router;

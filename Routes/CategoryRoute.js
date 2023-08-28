@@ -12,15 +12,17 @@ const {removeCategoryIMG ,categoryImageUpload} = require("./../Core/Validations/
 
 router.route("/category")
         .get(CategoryController.getAll)
-        .post(auth,authorize("ادمن"), categoryImageUpload,(req, res, next) => {
-                console.log(req.body , "body");
-                next(); 
-              }, CategoryValidPOST ,validationMW ,CategoryController.addCategory)
+        .post(auth,authorize("ادمن","موظف") ,categoryImageUpload ,CategoryValidPOST,validationMW ,CategoryController.addCategory)
 
 router.route("/category/:id")
         .get(CategoryController.getCategory)
-        .patch(CategoryValidPUT,validationMW,categoryImageUpload, CategoryController.updateCategory)//AuthenticationMW.auth,
-        .delete(removeCategoryIMG, CategoryController.deleteCategory)//AuthenticationMW.auth,validationMW ,
+        .patch(auth,authorize("ادمن") , categoryImageUpload ,CategoryValidPUT,validationMW, CategoryController.updateCategory)
+        .delete(auth,authorize("ادمن") ,removeCategoryIMG, CategoryController.deleteCategory)
 
+router.route("/dashboard/category/:id/")
+        .get(auth,authorize("ادمن","موظف"),CategoryController.getCategory)
+
+router.route("/dashboard/category")
+        .get(auth,authorize("ادمن","موظف"),CategoryController.getAll)
 
 module.exports=router;

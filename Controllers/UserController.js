@@ -60,9 +60,11 @@ exports.addUser = CatchAsync(async (request, response, next) => {
 );
 
 exports.getUser = CatchAsync(async (request, response, next) => {
+  if(request.user.id != request.params._id && request.user.role != "ادمن"){
+    return next(new AppError(`You are not allowed to access this route`, 401));
+  }
 
   const id = request.params._id;
-
   const attributes = ['id', 'firstName' , 'lastName', 'role', 'email','phoneNumber', 'image', 'updatedAt', 'createdAt'];
   const user = await User.findByPk(id, { attributes });
 
@@ -74,6 +76,10 @@ exports.getUser = CatchAsync(async (request, response, next) => {
   });
 
   exports.editUser = CatchAsync(async (request, response, next) => {
+    if(request.user.id != request.params._id && request.user.role != "ادمن"){
+      return next(new AppError(`You are not allowed to access this route`, 401));
+    }
+    
     const id = request.params._id;
 
     if (request.body.password) {
