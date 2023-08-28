@@ -1,6 +1,6 @@
 // const Product = require("../Models/ProductModel");
 // const Category = require("../Models/CategoryModel");
-const { Op } = require('sequelize');
+const { Op , sequelize} = require('sequelize');
 const { Category, Product } = require('./../Models/associateModel');
 
 
@@ -132,7 +132,7 @@ exports.getProduct = catchAsync(async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error); // Pass the error to the global error handler
+    next(error); 
   }
 });
 
@@ -216,18 +216,6 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const page = parseInt(request.query.page) || 1;
   const limit = parseInt(request.query.limit) || 10;
   const sort = request.query.sort || "newest";
-
-  // //range of category
-  // const maxHeightRange = await Product.findOne().sort({'height.en':-1}).select('height.en')
-  // const maxDepthRange = await Product.findOne().sort({'depth.en':-1}).select('depth.en')
-  // const minHeightRange = await Product.findOne().sort({'height.en':1}).select('height.en')
-  // const minDepthRange = await Product.findOne().sort({'depth.en':1}).select('depth.en')
-
-  // //filters in eng only
-  // const minDepth = request.query.minDepth || minDepthRange.depth.en;
-  // const maxDepth = request.query.maxDepth || maxDepthRange.depth.en;
-  // const minHeight = request.query.minHeight || minHeightRange.height.en;
-  // const maxHeight = request.query.maxHeight || maxHeightRange.height.en;
   
   const style = request.query.style || ""
   const style_ar = request.query.style_ar || ""
@@ -301,44 +289,23 @@ switch (sort) {
 
 exports.searchProducts = catchAsync(async (req, res, next) => {
   const searchQuery = req.query.searchkey || "";
-  const lang = req.headers.lang || "en";
 
-  let query = {
-    $or: []
-  };
-
-  const fieldsToSearch = [
-    "name"
-  ];
-
-  fieldsToSearch.forEach(field => {
-    const fieldQuery = {};
-
-    if (lang === "en") {
-      fieldQuery[`${field}.en`] = { $regex: searchQuery, $options: "i" };
-    } else {
-      fieldQuery[`${field}.ar`] = { $regex: searchQuery, $options: "i" };
+  const query = {
+    name: {
+      [Op.like]: `%${searchQuery}%`
     }
-
-    query.$or.push(fieldQuery);
-  });
-
-  const projection = {
-    main_image: 1
   };
 
-  if (lang === "en") {
-    fieldsToSearch.forEach(field => {
-      projection[`${field}.en`] = 1;
+  const projection = [
+    'image',
+    'name',
+  ];
+    
+  const data = await Product.findAll({
+    where: query,
+    attributes: projection,
     });
-  } else {
-    fieldsToSearch.forEach(field => {
-      projection[`${field}.ar`] = 1;
-    });
-  }
-
-  const data = await ProductSchema.find(query).select(projection);
-
+  
   if (data.length === 0) {
     return next(new AppError(`There are no matched results for your search.`, 400));
   }
