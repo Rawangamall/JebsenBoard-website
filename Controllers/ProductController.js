@@ -208,59 +208,76 @@ console.log("product",product);
   }
 });
 
-
 exports.getProductsCategory = catchAsync(async (request, response, next) => {
-
-  const lang = request.headers.lang || "en";
+  const lang = request.headers.lang || 'en';
   const categoryID = request.query.categoryID;
   const page = parseInt(request.query.page) || 1;
   const limit = parseInt(request.query.limit) || 10;
-  const sort = request.query.sort || "newest";
-  
-  const style = request.query.style || ""
-  const style_ar = request.query.style_ar || ""
+  const sort = request.query.sort || 'newest';
+  const style = request.query.style || '';
+  const material = request.query.material || '';
 
-  let whereClause = {
+
+  const whereClause = {
     category_id: categoryID,
   };
 
-  let orConditions = [];
+  const preData = await Product.findAll({
+    where: whereClause,
+    attributes: ['id', 'multilingualData'],
+  });
 
-if (style) {
-  orConditions.push({ "style.en": style });
-}
+  const prices = preData.map(
+    item => item.multilingualData[lang].price
+  );
 
-if (style_ar) {
-  orConditions.push({ "style.ar": style_ar });
-}
+  const leastPrice = Math.min(...prices);
+  const highestPrice = Math.max(...prices);
+  const minPrice = parseFloat(request.query.minPrice) || leastPrice;
+  const maxPrice = parseFloat(request.query.maxPrice) || highestPrice + 1;
 
-if (orConditions.length > 0) {
-  query.$or = orConditions;
-}
+  const andConditions = [];
+
+  if (style) {
+   andConditions.push({ [`multilingualData.${lang}.style`]: style });
+  }
+
+  if (material) {
+   andConditions.push({ [`multilingualData.${lang}.material`]: material });
+  }
+
+  if (andConditions.length > 0) {
+   whereClause[Op.and] = andConditions;
+  }
 
 
-const order = [];
-switch (sort) {
-  case 'newest':
-    order.push(['createdAt', 'DESC']);
-    break;
-  case 'earliest':
-    order.push(['createdAt', 'ASC']);
-    break;
-  case 'price_dsec':
-    order.push([`multilingualData.${lang}.price`, 'DESC']);
-    break;
-  case 'price_asec':
-    order.push([`multilingualData.${lang}.price`, 'ASC']);
-    break;
-  default:
-    order.push(['createdAt', 'DESC']);
-}
+  const order = [];
+  switch (sort) {
+    case 'newest':
+      order.push(['createdAt', 'DESC']);
+      break;
+    case 'earliest':
+      order.push(['createdAt', 'ASC']);
+      break;
+    case 'price_dsec':
+      order.push([`multilingualData.en.price`, 'DESC']);
+      break;
+    case 'price_asec':
+      order.push([`multilingualData.en.price`, 'ASC']);
+      break;
+    default:
+      order.push(['createdAt', 'DESC']);
+  }
 
-  const attributes = ['id','name','multilingualData', 'image'];
+  const attributes = ['id', 'name', 'multilingualData', 'image'];
 
   const { docs, pages, total } = await Product.paginate({
-    where: whereClause,
+    where: {
+      ...whereClause,
+      [`multilingualData.en.price`]: {
+        [Op.between]: [minPrice, maxPrice],
+      },
+    },
     attributes,
     page,
     paginate: limit,
@@ -268,24 +285,45 @@ switch (sort) {
   });
 
   const data = docs.map(item => {
-    const { multilingualData, ...userData } = item.toJSON();
-    const { depth, price, style, height,material,description } = lang === 'en' ? multilingualData.en : multilingualData.ar;
+    const multilingualData = item.multilingualData[lang];
+    const {
+      depth,
+      price,
+      style,
+      height,
+      material,
+      description,
+    } = multilingualData;
 
     return {
-      ...userData,
-      depth, price, style, height,material,description 
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      depth,
+      price,
+      style,
+      height,
+      material,
+      description,
     };
   });
+
+  if(data.length ==0){
+    return next(new AppError(`There's no products!`, 400));
+  }
 
   response.status(200).json({
     products: data,
     currentPage: page,
     totalPages: pages,
     totalProducts: total,
+    leastPrice: leastPrice,
+    highestPrice: highestPrice,
+    styles: [...new Set(preData.map(item => item.multilingualData[lang].style))],
+    materials: [...new Set(preData.map(item => item.multilingualData[lang].material))],
   });
-
 });
- 
+
 
 exports.searchProducts = catchAsync(async (req, res, next) => {
   const searchQuery = req.query.searchkey || "";
