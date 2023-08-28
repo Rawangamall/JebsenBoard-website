@@ -6,40 +6,44 @@ const catchAsync = require("./../utils/CatchAsync");
 
 exports.getAll = catchAsync(async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 10;
     const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
     const offset = (page - 1) * limit;
 
-    const products = await Product.findAll({
+    const productsWithCounts = await Product.findAndCountAll({
       offset,
       limit
     });
 
-    if (products.length === 0) {
+    if (productsWithCounts.count === 0) {
       return next(new AppError('لم يتم العثور على أي منتج', 404));
     }
-   
-    let modifiedProducts;
-    if(lang === 'en' || lang === 'ar')
-    {
-        modifiedProducts = products.map(product => {
-      const plainProduct = product.get({ plain: true });
-      return {
-        ...plainProduct,
-        multilingualData: plainProduct.multilingualData[lang]
-      };
-    });
-    }
-   
 
-    res.status(200).json(modifiedProducts? modifiedProducts : products);
+    let modifiedProducts;
+    if (lang === 'en' || lang === 'ar') {
+      modifiedProducts = productsWithCounts.rows.map(product => {
+        const plainProduct = product.get({ plain: true });
+        return {
+          ...plainProduct,
+          multilingualData: plainProduct.multilingualData[lang]
+        };
+      });
+    }
+
+    res.status(200).json({
+      totalProducts: productsWithCounts.count,
+      currentPage: page,
+      totalPages: Math.ceil(productsWithCounts.count / limit),
+      products: modifiedProducts ? modifiedProducts : productsWithCounts.rows
+    });
   } catch (error) {
     console.error('خطأ في جلب المنتجات:', error);
     next(error);
   }
 });
+
 
 exports.addProduct = catchAsync(async (request, response, next) => {
   const category_id = request.body.category_id;

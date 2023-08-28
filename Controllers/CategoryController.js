@@ -10,58 +10,52 @@ const path = require("path");
 const fs = require('fs');
 
 exports.getAll = catchAsync(async (req, res, next) => {
-
   const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
-
-  const categories = await Category.findAll();
-  if (!categories) return next(new AppError('لم يتم العثور على أي فئة', 404));
 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
 
   try {
-    const categoriesWithCounts = await Category.findAll({
+    const categoriesWithCounts = await Category.findAndCountAll({
       attributes: {
         include: [
           'id',
           'multilingualData',
           'image',
-          [literal('(SELECT COUNT(*) FROM products WHERE products.category_id = category.id)'), 'productCount']
+          [
+            literal('(SELECT COUNT(*) FROM products WHERE products.category_id = category.id)'),
+            'productCount'
+          ]
         ]
       },
-      offset: (page - 1) * limit,
-      limit: limit
+      offset,
+      limit,
     });
 
-    if (categoriesWithCounts.length === 0) {
+    if (categoriesWithCounts.count === 0) {
       return next(new AppError('لم يتم العثور على أي فئة', 404));
     }
 
     // Filter categories based on language
-    let localizedCategories = [];
-    if(lang === null)
-    {
-       localizedCategories = categoriesWithCounts.map(category => ({
-        id: category.id,
-        name_ar: category.multilingualData.ar.name ,
-        name_en: category.multilingualData.en.name,
-        image: category.image,
-        productCount: category.dataValues.productCount || 0
-      }));
-    }
-    else{
-     localizedCategories = categoriesWithCounts.map(category => ({
+    const localizedCategories = categoriesWithCounts.rows.map(category => ({
       id: category.id,
       name: lang === 'ar' ? category.multilingualData.ar.name : category.multilingualData.en.name,
       image: category.image,
       productCount: category.dataValues.productCount || 0
     }));
-}
-    res.status(200).json(localizedCategories);
+
+    res.status(200).json({
+      totalCategories: categoriesWithCounts.count,
+      currentPage: page,
+      totalPages: Math.ceil(categoriesWithCounts.count / limit),
+      categories: localizedCategories,
+    });
   } catch (error) {
     next(error);
   }
 });
+
 
 exports.addCategory = catchAsync(async (request, response, next) => {
   const originalFileName = request.file.originalname;
