@@ -273,7 +273,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   });
 
   const prices = preData.map(
-    item => item.multilingualData[lang].price
+    item => item.multilingualData.en.price
   );
 
   const leastPrice = Math.min(...prices);
@@ -294,7 +294,6 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   if (andConditions.length > 0) {
    whereClause[Op.and] = andConditions;
   }
-
 
   const order = [];
   switch (sort) {
@@ -380,6 +379,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   };
 
   const projection = [
+    'id',
     'image',
     'name',
   ];
