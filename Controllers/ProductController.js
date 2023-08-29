@@ -6,24 +6,24 @@ const catchAsync = require("./../utils/CatchAsync");
 
 exports.getAll = catchAsync(async (req, res, next) => {
   try {
-    const page = parseInt(req.body.page) || 1;
-    const limit = parseInt(req.body.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
     const offset = (page - 1) * limit;
 
-    const productsWithCounts = await Product.findAndCountAll({
+    const { rows, count } = await Product.findAndCountAll({
       offset,
-      limit
+      limit,
     });
 
-    if (productsWithCounts.count === 0) {
-      return next(new AppError('لم يتم العثور على أي منتج', 404));
+    if (count === 0) {
+      return next(new AppError('No products found', 404));
     }
 
     let modifiedProducts;
     if (lang === 'en' || lang === 'ar') {
-      modifiedProducts = productsWithCounts.rows.map(product => {
+      modifiedProducts = rows.map(product => {
         const plainProduct = product.get({ plain: true });
         return {
           ...plainProduct,
@@ -33,13 +33,13 @@ exports.getAll = catchAsync(async (req, res, next) => {
     }
 
     res.status(200).json({
-      totalProducts: productsWithCounts.count,
       currentPage: page,
-      totalPages: Math.ceil(productsWithCounts.count / limit),
-      products: modifiedProducts ? modifiedProducts : productsWithCounts.rows
+      totalPages: Math.ceil(count / limit),
+      totalProducts: count,
+      products: modifiedProducts ? modifiedProducts : rows
     });
   } catch (error) {
-    console.error('خطأ في جلب المنتجات:', error);
+    console.error('Error fetching products:', error);
     next(error);
   }
 });
