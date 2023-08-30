@@ -31,6 +31,18 @@ exports.getAll = catchAsync(async (req, res, next) => {
         };
       });
     }
+    else if(lang === null){
+
+     modifiedProducts = rows.map(product => {
+        const plainProduct = product.get({ plain: true });
+        return {
+          ...plainProduct,
+          multilingualData: plainProduct.multilingualData['ar']
+        };
+      });
+    }
+
+
 
     res.status(200).json({
       currentPage: page,
