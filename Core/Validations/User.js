@@ -46,7 +46,7 @@ exports.UserValidPATCH = [
         return Promise.reject('Email already in use - هذا الايميل مستخدم');
       }
     }),  
-  body("image").optional().isString().withMessage("image should string"),
+  body("image").optional().isString().withMessage("يجب ادخال صوره مناسبه"),
   body('phoneNumber')
     .isString().optional().withMessage('ادخل رقم الهاتف بالعربي')
     .custom(async (value) => {

@@ -406,7 +406,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
     });
   
   if (data.length === 0) {
-    return next(new AppError(`There are no matched results for your search.`, 400));
+    return next(new AppError(`There are no matched results for your search - لا يوجد منتج متطابق`, 400));
   }
 
   res.status(200).json(data);

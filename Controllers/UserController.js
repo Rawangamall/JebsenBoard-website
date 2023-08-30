@@ -69,6 +69,7 @@ exports.getUser = CatchAsync(async (request, response, next) => {
   }
 
   const id = request.params._id;
+
   const attributes = ['id', 'firstName' , 'lastName', 'role', 'email','phoneNumber', 'image', 'updatedAt', 'createdAt'];
   const user = await User.findByPk(id, { attributes });
 

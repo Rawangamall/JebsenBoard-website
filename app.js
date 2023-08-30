@@ -3,13 +3,13 @@ const cors = require("cors");
 const morgan = require("morgan");
 const sequelize = require('./utils/dbConfig');
 const path=require("path"); 
-var bodyParser = require('body-parser')
 require("dotenv").config({ path: "config.env" });
 
 const LoginRoute = require("./Routes/LoginRoute");
 const UserRoute = require("./Routes/UserRoute");
 const ProductRoute = require("./Routes/ProductRoute");
 const CategoryRoute = require("./Routes/CategoryRoute");
+const FooterRoute = require("./Routes/FooterRoute");
 
 //server
 const server = express();
@@ -44,6 +44,7 @@ server.use(LoginRoute)
 server.use(UserRoute)
 server.use(CategoryRoute)
 server.use(ProductRoute)
+server.use(FooterRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {
