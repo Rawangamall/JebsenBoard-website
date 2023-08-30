@@ -12,34 +12,50 @@ exports.getAll = catchAsync(async (req, res, next) => {
 
     const offset = (page - 1) * limit;
 
-    const products = await Product.findAll({
+    const { rows, count } = await Product.findAndCountAll({
       offset,
-      limit
+      limit,
     });
 
-    if (products.length === 0) {
-      return next(new AppError('لم يتم العثور على أي منتج', 404));
+    if (count === 0) {
+      return next(new AppError('No products found', 404));
     }
-   
+
     let modifiedProducts;
-    if(lang === 'en' || lang === 'ar')
-    {
-        modifiedProducts = products.map(product => {
-      const plainProduct = product.get({ plain: true });
-      return {
-        ...plainProduct,
-        multilingualData: plainProduct.multilingualData[lang]
-      };
-    });
+    if (lang === 'en' || lang === 'ar') {
+      modifiedProducts = rows.map(product => {
+        const plainProduct = product.get({ plain: true });
+        return {
+          ...plainProduct,
+          multilingualData: plainProduct.multilingualData[lang]
+        };
+      });
     }
-   
+    else if(lang === null){
 
-    res.status(200).json(modifiedProducts? modifiedProducts : products);
+     modifiedProducts = rows.map(product => {
+        const plainProduct = product.get({ plain: true });
+        return {
+          ...plainProduct,
+          multilingualData: plainProduct.multilingualData['ar']
+        };
+      });
+    }
+
+
+
+    res.status(200).json({
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      totalProducts: count,
+      products: modifiedProducts ? modifiedProducts : rows
+    });
   } catch (error) {
-    console.error('خطأ في جلب المنتجات:', error);
+    console.error('Error fetching products:', error);
     next(error);
   }
 });
+
 
 exports.addProduct = catchAsync(async (request, response, next) => {
   const category_id = request.body.category_id;
