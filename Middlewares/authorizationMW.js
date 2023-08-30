@@ -34,7 +34,7 @@ exports.authorize = (permissionRoles) => async (req, res, next) => {
   try {
     const role = req.role; // Assuming you have the user's role ID in the request
 
-    console.log(role,permissionRoles )
+    console.log(permissionRoles )
     // Check if the user has permissions for the specific model and permission
     if ( permissionRoles.includes(role)) {
       // User is authorized to access the endpoint

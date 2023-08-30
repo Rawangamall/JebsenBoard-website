@@ -25,7 +25,8 @@ exports.login = catchAsync(async (req,res,next)=>{
 if(!user || !(await user.correctPassword(password, user.password))){
     return next(new AppError(`Incorrect email or password`, 401));
 }
-console.log(user.id, "user._id")
+console.log(user.id, "user._id" ,"role", user.role)
+
 const token = JWT.sign({ id:user.id , role:user.role },process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE_IN});
 
 res.status(200).json({

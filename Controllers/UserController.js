@@ -61,7 +61,7 @@ exports.addUser = CatchAsync(async (request, response, next) => {
 
 exports.getUser = CatchAsync(async (request, response, next) => {
 
- 
+ console.log(request.userId, request.params._id)
   if(request.userId != request.params._id && request.role != "ادمن"){
 
       return next(new AppError("ليس لديك الصلاحية للوصول إلى هذا الطريق",401));

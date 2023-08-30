@@ -11,7 +11,7 @@ const {removeProductIMG ,productImageUpload} = require("./../Core/Validations/im
 
 router.route("/products")
         .get(ProductController.getAll)
-       .post(auth,authorize("ادمن","موظف"),productImageUpload,ProductValidPOST,validationMW ,ProductController.addProduct)
+       .post(auth,authorize(["ادمن","موظف"]),productImageUpload,ProductValidPOST,validationMW ,ProductController.addProduct)
 
 router.route("/product/category")
       .get(ProductController.getProductsCategory)
@@ -21,12 +21,12 @@ router.route("/product/search")
 
 router.route("/product/:id")
       .get( ProductController.getProduct)
-      .patch(auth,authorize("ادمن","موظف"),productImageUpload ,ProductValidPatch, validationMW, ProductController.updateProduct)
+      .patch(auth,authorize(["ادمن","موظف"]),productImageUpload ,ProductValidPatch, validationMW, ProductController.updateProduct)
       .delete(auth,authorize("ادمن"),validationMW ,removeProductIMG,ProductController.deleteProduct)
 
 router.route("/dashboard/product/:id")
-      .get(auth ,authorize("ادمن","موظف"),ProductController.getProduct)
+      .get(auth ,authorize(["ادمن","موظف"]),ProductController.getProduct)
 
 router.route("/dashboard/products")
-      .get(auth ,authorize("ادمن","موظف"),ProductController.getAll)
+      .get(auth ,authorize(["ادمن","موظف"]),ProductController.getAll)
 module.exports=router;

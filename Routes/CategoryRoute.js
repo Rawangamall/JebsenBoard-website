@@ -12,7 +12,7 @@ const {removeCategoryIMG ,categoryImageUpload} = require("./../Core/Validations/
 
 router.route("/category")
         .get(CategoryController.getAll)
-        .post(auth,authorize("ادمن","موظف") ,categoryImageUpload ,CategoryValidPOST,validationMW ,CategoryController.addCategory)
+        .post(auth,authorize(["ادمن","موظف"]) ,categoryImageUpload ,CategoryValidPOST,validationMW ,CategoryController.addCategory)
 
 router.route("/category/:id")
         .get(CategoryController.getCategory)
@@ -20,9 +20,9 @@ router.route("/category/:id")
         .delete(auth,authorize("ادمن") ,removeCategoryIMG, CategoryController.deleteCategory)
 
 router.route("/dashboard/category/:id/")
-        .get(auth,authorize("ادمن","موظف"),CategoryController.getCategory)
+        .get(auth,authorize(["ادمن","موظف"]),CategoryController.getCategory)
 
 router.route("/dashboard/category")
-        .get(auth,authorize("ادمن","موظف"),CategoryController.getAll)
+        .get(auth,authorize(["ادمن","موظف"]),CategoryController.getAll)
 
 module.exports=router;
