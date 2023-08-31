@@ -4,8 +4,8 @@ const validRoles = ['ادمن', 'موظف'];
 const arabicLettersRegex = /^[\u0600-\u06FF\s]+$/;
 
 exports.UserValidPOST = [
-  body('firstName').matches(/^[\u0600-\u06FF\s]+$/).withMessage('الاسم الأول يجب أن يتكون من حروف عربية فقط'),
-  body('lastName').matches(/^[\u0600-\u06FF\s]+$/).withMessage('الاسم الثاني يجب أن يتكون من حروف عربية فقط'),  
+  body('firstName').isString().withMessage('الاسم الأول يجب أن يتكون من حروف عربية فقط'),
+  body('lastName').isString().withMessage('الاسم الثاني يجب أن يتكون من حروف عربية فقط'),  
   body('email')
   .isEmail().withMessage('يجب ادخال الايميل الصحيح')
   .custom(async (value) => {
@@ -37,8 +37,8 @@ exports.UserValidPOST = [
 ];
 
 exports.UserValidPATCH = [
-  body('firstName').matches(/^[\u0600-\u06FF\s]+$/).withMessage('الاسم الأول يجب أن يتكون من حروف عربية فقط'),
-  body('lastName').matches(/^[\u0600-\u06FF\s]+$/).withMessage('الاسم الثاني يجب أن يتكون من حروف عربية فقط'),  
+  body('firstName').optional().isString().withMessage('الاسم الأول يجب أن يتكون من حروف عربية فقط'),
+  body('lastName').optional().isString().withMessage('الاسم الثاني يجب أن يتكون من حروف عربية فقط'),  
   body('email')
     .isEmail().optional().withMessage('يجب ادخال الايميل الصحيح')
     .custom(async (value) => {
