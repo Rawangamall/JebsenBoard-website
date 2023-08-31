@@ -9,11 +9,10 @@ const User = sequelize.define('users', {
   lastName:DataTypes.STRING,
   phoneNumber:{type : DataTypes.STRING , unique: true},
   role: {
-    type: DataTypes.STRING,
-    validate: {
-      isIn: ['ادمن', 'موظف'] 
-      }
-   },
+    type: DataTypes.ENUM,
+    values: ['ادمن', 'موظف'],
+    allowNull: false
+  },
     email: {
     type: DataTypes.STRING,
     allowNull: false,
