@@ -37,7 +37,7 @@ server.use(
 server.use(express.json());
 server.use(express.urlencoded({extended:false}));
 
-server.use('image', express.static(path.join(__dirname, 'Core/images')));
+server.use('/image', express.static(path.join(__dirname, 'Core/images')));
 
 //Routes 
 server.use(LoginRoute)
