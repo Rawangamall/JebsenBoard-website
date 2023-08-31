@@ -7,7 +7,14 @@ const FooterInfo = sequelize.define('FooterInfo', {
         primaryKey: true,
         autoIncrement: true,
     },
-    email: DataTypes.STRING,
+    email: {
+        type: DataTypes.STRING,
+        validate: {
+            isEmail: {
+              msg: 'Invalid email format'
+            }
+          }
+        },
     location_en: DataTypes.STRING,
     location_ar: DataTypes.STRING,
     phone_1: DataTypes.STRING,
