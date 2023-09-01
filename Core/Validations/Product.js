@@ -64,7 +64,7 @@ exports.ProductValidPatch = [
     }),
   body("description_ar").optional().isString().withMessage("يرجى إدخال الوصف بالعربي"),
   body("description").optional().isString().withMessage("يرجى إدخال الوصف"),
-  body("price_ar").optional().isNumeric().withMessage("السعر يجب أن يكون رقمًا صحيحًا"),
+  body("price_ar").optional().isString().withMessage("السعر يجب أن يكون رقمًا صحيحًا"),
   body("price").optional().isNumeric().withMessage("السعر يجب أن يكون رقمًا صحيحًا"),
   body("category_id").optional().isInt().withMessage("رقم الفئة يجب أن يكون رقمًا صحيحًا")
 ];
