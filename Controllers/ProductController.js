@@ -41,9 +41,6 @@ exports.getAll = catchAsync(async (req, res, next) => {
         };
       });
     }
-
-
-
     res.status(200).json({
       currentPage: page,
       totalPages: Math.ceil(count / limit),
@@ -134,9 +131,7 @@ exports.getProduct = catchAsync(async (req, res, next) => {
      
     });
   }
-  // else{
-  //    modifiedRelatedProducts = relatedProducts;
-  // }
+  
 
   let modifiedProduct;
 
@@ -147,9 +142,6 @@ exports.getProduct = catchAsync(async (req, res, next) => {
       multilingualData: product.multilingualData[lang]
     };
   }
-  // else{
-  //   modifiedProduct = product;
-  // }
   
     res.status(200).json({
       status: 'success',
@@ -230,9 +222,16 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     }
     if (req.body.style) {
       updatedMultilingualData.en.style = req.body.style;
+    } else {
+      // If req.body.style is empty or not provided, remove the "style" property from updatedMultilingualData
+      delete updatedMultilingualData.en.style;
     }
+    
     if (req.body.style_ar) {
       updatedMultilingualData.ar.style = req.body.style_ar;
+    } else {
+      // If req.body.style_ar is empty or not provided, remove the "style" property from updatedMultilingualData
+      delete updatedMultilingualData.ar.style;
     }
 
     // Create a new product object with the updated data

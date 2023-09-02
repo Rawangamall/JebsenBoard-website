@@ -21,7 +21,7 @@ router.route("/product/search")
 
 router.route("/product/:id")
       .get( ProductController.getProduct)
-      .patch(auth,authorize(["ادمن","موظف"]),productImageUpload ,ProductValidPatch, validationMW, ProductController.updateProduct)
+      .put(auth,authorize(["ادمن","موظف"]),productImageUpload ,ProductValidPatch, validationMW, ProductController.updateProduct)
       .delete(auth,authorize("ادمن"),validationMW ,removeProductIMG,ProductController.deleteProduct)
 
 router.route("/dashboard/product/:id")
