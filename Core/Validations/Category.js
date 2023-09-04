@@ -21,6 +21,12 @@ exports.CategoryValidPOST = [
     .notEmpty().withMessage("اسم المنتج مطلوب")
     .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
     .custom(async (value, { req }) => {
+
+      const arabicPattern = /^[\u0600-\u06FF\s]+$/;
+      if (!arabicPattern.test(value)) {
+        throw new Error("يجب أن يحتوي اسم المنتج على أحرف عربية فقط");
+      }
+
       const categoryNameExists = await checkIfCategoryNameExists(value, "ar");
       if (categoryNameExists) {
         throw new Error("اسم الفئة موجود بالفعل");
@@ -32,6 +38,11 @@ exports.CategoryValidPOST = [
     .notEmpty().withMessage("اسم المنتج مطلوب")
     .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
     .custom(async (value, { req }) => {
+      const englishPattern = /^[A-Za-z\s]+$/;
+    
+    if (!englishPattern.test(value)) {
+      throw new Error("The product name should contain only English characters");
+    }
       const categoryNameExists = await checkIfCategoryNameExists(value, "en");
       if (categoryNameExists) {
         throw new Error("اسم الفئة موجود بالفعل");
@@ -45,6 +56,12 @@ exports.CategoryValidPUT = [
     .optional()
     .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
     .custom(async (value, { req }) => {
+
+      const arabicPattern = /^[\u0600-\u06FF\s]+$/;
+      if (!arabicPattern.test(value)) {
+        throw new Error("يجب أن يحتوي اسم المنتج على أحرف عربية فقط");
+      }
+
       const categoryNameExists = await checkIfCategoryNameExists(value, "ar", req.params.id);
       if (categoryNameExists) {
         throw new Error("اسم الفئة موجود بالفعل");
@@ -56,6 +73,11 @@ exports.CategoryValidPUT = [
     .optional()
     .isString().withMessage("يجب أن يكون اسم المنتج نصًا")
     .custom(async (value, { req }) => {
+      const englishPattern = /^[A-Za-z\s]+$/;
+    
+    if (!englishPattern.test(value)) {
+      throw new Error("The product name should contain only English characters");
+    }
       const categoryNameExists = await checkIfCategoryNameExists(value, "en", req.params.id);
       if (categoryNameExists) {
         throw new Error("اسم الفئة موجود بالفعل");

@@ -226,8 +226,9 @@ exports.productImageUpload = multer({
           if (product) {
             const existingImage = product.image;
             // Remove the existing image if it's not the default image
+            console.log("existingImage outside", existingImage);
             if (existingImage && existingImage !== "default.jpg") {
-              console.log("existingImage", existingImage);
+              console.log("existingImage inside", existingImage);
               fs.unlink(
                 path.join(__dirname, "..", "images", "Product", existingImage),
                 (err) => {
