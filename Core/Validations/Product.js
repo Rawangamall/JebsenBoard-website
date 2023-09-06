@@ -2,10 +2,86 @@ const { body, param } = require("express-validator");
 const Product = require("../../Models/ProductModel");
 const { Op } = require('sequelize');
 
+// Validation error messages
+const errorMessages = {
+  required: "يرجى إدخال {{field}}",
+  length: "{{field}} يجب أن يكون بين {{min}} و {{max}} حرف",
+  arabic: "{{field}} يجب أن يحتوي على أحرف عربية فقط",
+  english: "{{field}} يجب أن يحتوي على أحرف إنجليزية فقط",
+  numeric: "{{field}} يجب أن يكون رقمًا صحيحًا",
+};
+
+// Define validation rules
+const validationRules = {
+  name: [
+    body("name")
+      .optional()
+      .isString().withMessage(errorMessages.required)
+      .isLength({ min: 2, max: 100 }).withMessage(errorMessages.length)
+      .custom(async (value, { req }) => {
+        const productNameExists = await checkIfProductNameExists(value);
+        if (productNameExists.length > 0) {
+          throw new Error("اسم المنتج موجود بالفعل");
+        }
+        return true;
+      }),
+  ],
+  description: [
+    body("description_ar")
+      .optional()
+      .isString().withMessage(errorMessages.arabic),
+    body("description")
+      .optional()
+      .isString().withMessage(errorMessages.english),
+  ],
+  style: [
+    body("style_ar")
+      .optional()
+      .isString().withMessage(errorMessages.arabic),
+    body("style")
+      .optional()
+      .isString().withMessage(errorMessages.english),
+  ],
+  material: [
+    body("material_ar")
+      .optional()
+      .isString().withMessage(errorMessages.arabic),
+    body("material")
+      .optional()
+      .isString().withMessage(errorMessages.english),
+  ],
+  depth: [
+    body("depth_ar")
+      .optional()
+      .isString().withMessage(errorMessages.arabic),
+    body("depth")
+      .optional()
+      .isNumeric().withMessage(errorMessages.numeric),
+  ],
+  height: [
+    body("height_ar")
+      .optional()
+      .isString().withMessage(errorMessages.arabic),
+    body("height")
+      .optional()
+      .isNumeric().withMessage(errorMessages.numeric),
+  ],
+  price: [
+    body("price_ar")
+      .optional()
+      .isString().withMessage(errorMessages.arabic),
+    body("price")
+      .optional()
+      .isFloat().withMessage(errorMessages.numeric),
+  ],
+  category_id: [
+    body("category_id")
+      .optional()
+      .isInt().withMessage(errorMessages.numeric),
+  ],
+};
+
 async function checkIfProductNameExists(productName, id) {
-  // Implement your actual database query or logic here
-  // Return true if product name exists, false otherwise
-  // Exclude the current product
   const queryOptions = {
     where: {
       name: productName,
@@ -19,8 +95,6 @@ async function checkIfProductNameExists(productName, id) {
   }
 
   const product = await Product.findAll(queryOptions);
-  console.log("product",product);
-
   return product;
 }
 
@@ -28,43 +102,32 @@ exports.ProductValidPOST = [
   body("name")
     .optional()
     .isString().withMessage("يرجى إدخال اسم المنتج")
-    .isLength({ min: 3, max: 100 }).withMessage("اسم المنتج يجب أن يكون بين 3 و 100 حرف")
+    .isLength({ min: 2, max: 100 }).withMessage("اسم المنتج يجب أن يكون بين 3 و 100 حرف")
     .custom(async (value, { req }) => {
+
+
       const productNameExists = await checkIfProductNameExists(value);
       if (productNameExists.length > 0) {
         throw new Error("اسم المنتج موجود بالفعل");
       }
       return true;
     }),
-  body("description_ar").isString().withMessage("يرجى إدخال الوصف بالعربي"),
-  body("description").notEmpty().isString().withMessage("يرجى إدخال الوصف"),
-  body("price_ar").isString().withMessage("السعر يجب أن يكون رقمًا صحيحًا"),
-  body("price").notEmpty().isFloat().withMessage("يرجى إدخال السعر"),
-  body("category_id").notEmpty().isInt().withMessage("يرجى إدخال رقم الفئة"),
-  body("style").optional().isString().withMessage("يرجى إدخال النمط"),
-  body("style_ar").optional().isString().withMessage("يرجى إدخال النمط بالعربي"),
-  body("material").optional().isString().withMessage("يرجى إدخال المواد"),
-  body("material_ar").optional().isString().withMessage("يرجى إدخال المواد بالعربي"),
-  body("depth").optional().isNumeric().withMessage("العمق يجب أن يكون رقمًا صحيحًا"),
-  body("depth_ar").optional().isString().withMessage("يرجى إدخال العمق بالعربي"),
-  body("height").optional().isNumeric().withMessage("الارتفاع يجب أن يكون رقمًا صحيحًا"),
-  body("height_ar").optional().isString().withMessage("يرجى إدخال الارتفاع بالعربي"),
+  ...validationRules.description,
+  ...validationRules.style,
+  ...validationRules.material,
+  ...validationRules.depth,
+  ...validationRules.height,
+  ...validationRules.price,
+  body("category_id").notEmpty().isInt().withMessage("يرجى إدخال رقم الفئة")
 ];
 
 exports.ProductValidPatch = [
-  body("name").
-    optional().
-    isString().withMessage("يرجى إدخال اسم المنتج")
-    .custom(async (value, { req }) => {
-      const productNameExists = await checkIfProductNameExists(value, req.params.id);
-      if (productNameExists.length > 0) {
-        throw new Error("اسم المنتج موجود بالفعل");
-      }
-      return true;
-    }),
-  body("description_ar").optional().isString().withMessage("يرجى إدخال الوصف بالعربي"),
-  body("description").optional().isString().withMessage("يرجى إدخال الوصف"),
-  body("price_ar").optional().isString().withMessage("السعر يجب أن يكون رقمًا صحيحًا"),
-  body("price").optional().isNumeric().withMessage("السعر يجب أن يكون رقمًا صحيحًا"),
-  body("category_id").optional().isInt().withMessage("رقم الفئة يجب أن يكون رقمًا صحيحًا")
+  ...validationRules.name,
+  ...validationRules.description,
+  ...validationRules.style,
+  ...validationRules.material,
+  ...validationRules.depth,
+  ...validationRules.height,
+  ...validationRules.price,
+  ...validationRules.category_id,
 ];
