@@ -1,3 +1,4 @@
+const { json } = require("body-parser");
 const sequelize = require("../utils/dbConfig");
 const { DataTypes } = require('sequelize');
 
@@ -22,6 +23,11 @@ const FooterInfo = sequelize.define('FooterInfo', {
     facebooklink: DataTypes.STRING,
     instagramlink_1: DataTypes.STRING,
     instagramlink_2: DataTypes.STRING,
+    images: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: {},
+    },
 }, {
     tableName: 'FooterInfo',
     timestamps: false ,

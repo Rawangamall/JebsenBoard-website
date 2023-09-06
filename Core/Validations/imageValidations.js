@@ -8,6 +8,7 @@ const { Op } = require('sequelize');
 const Product = require("./../../Models/ProductModel");
 const Category = require("./../../Models/CategoryModel");
 const User = require("./../../Models/UserModel");
+const Footer = require("./../../Models/FooterModel");
 
 // delete require.cache[require.resolve('./../../models/ProductModel')];
 
@@ -60,17 +61,63 @@ exports.addIMG = multer({
   }),
 }).single("image");
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    var fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
+
+    if (fullUrl.includes("generalSetting")) {
+      cb(null, path.join(__dirname, "..", "images", "Sliders"));
+    } else {
+      return next(new AppError(`المسار غير موجود`, 404));
+    }
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+exports.uploadMultiple = multer({  fileFilter: function (req, file, cb) {
+  if (
+    file.mimetype != "image/png" &&
+    file.mimetype != "image/jpg" &&
+    file.mimetype != "image/jpeg"
+  ) {
+    return cb(new Error("jpg، png، أو jpeg  يُسمح فقط بالصور بامتدادات "));
+  }
+  cb(null, true);
+},
+storage: storage }).array("images", 6); 
+
 exports.removeUserIMG = function (req, res, next) {
   const id = req.params._id;
 
   User.findByPk(id).then((data) => {
     if (data != null && data.image != "default.jpg") {
       imageName = data.id + "." + "jpg";
-     console.log(imageName)
+
       fs.unlink(
         path.join(__dirname, "..", "images", "User", imageName),
         function (err) {
           if (err) next(new Error("المستخدم غير موجود"));
+        }
+      );
+    }
+    next();
+  });
+};
+
+exports.removeSliderIMG = function (req, res, next) {
+  const { id , index} = req.params;
+
+  Footer.findByPk(id).then((data) => {
+    if (data != null && data.images != "") {
+
+    const imageName = data.images[index].filename;
+
+      fs.unlink(
+        path.join(__dirname, "..", "images", "Sliders", imageName),
+        function (err) {
+          if (err) next(new Error("الصورة غير موجوده"));
         }
       );
     }
