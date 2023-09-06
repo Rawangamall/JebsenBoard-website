@@ -17,7 +17,9 @@ exports.Update = catchAsync(async (req, res, next) => {
   if (footer) {
     
     const existingImagesCount = (footer.images || []).length;
-    const newImages = req.files?.map((file, index) => {
+
+    if(req.files != undefined){
+    const newImages = req.files.map((file, index) => {
       return {
         index: existingImagesCount + index,
         filename: file.filename
@@ -25,7 +27,7 @@ exports.Update = catchAsync(async (req, res, next) => {
     });
 
     updatedFooter.images = (footer.images || []).concat(newImages);
-
+  }
     await footer.update(updatedFooter);
     res.status(200).json({ message: 'تم تحديث البيانات' });
   } else {

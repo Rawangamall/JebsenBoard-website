@@ -5,12 +5,14 @@ const {uploadMultiple , removeSliderIMG} = require("./../Core/Validations/imageV
 
 const validationData = require("./../Core/Validations/Footer")
 const validationMW = require("./../Core/Validations/validateMW")
+const {auth} = require("./../Middlewares/authenticationMW")
+const {authorize} = require("./../Middlewares/authorizationMW")
 
 router.route("/generalSetting")
-       .get(FooterController.getAll)
-       .patch(uploadMultiple,validationData.FooterPatch,validationMW,FooterController.Update);
+       .get(auth,authorize("ادمن"),FooterController.getAll)
+       .patch(auth,authorize("ادمن"),uploadMultiple,validationData.FooterPatch,validationMW,FooterController.Update);
      
 router.route("/generalSetting/:id/:index")
-       .delete(removeSliderIMG,FooterController.Delete)
+       .delete(auth,authorize("ادمن"),removeSliderIMG,FooterController.Delete)
   
 module.exports=router; 
