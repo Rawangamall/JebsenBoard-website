@@ -9,7 +9,7 @@ const {auth} = require("./../Middlewares/authenticationMW")
 const {authorize} = require("./../Middlewares/authorizationMW")
 
 router.route("/generalSetting")
-       .get(auth,authorize("ادمن"),FooterController.getAll)
+       .get(FooterController.getAll)
        .patch(auth,authorize("ادمن"),uploadMultiple,validationData.FooterPatch,validationMW,FooterController.Update);
      
 router.route("/generalSetting/:id/:index")
