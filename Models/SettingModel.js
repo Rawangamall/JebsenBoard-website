@@ -1,8 +1,7 @@
-const { json } = require("body-parser");
 const sequelize = require("../utils/dbConfig");
 const { DataTypes } = require('sequelize');
 
-const FooterInfo = sequelize.define('FooterInfo', {
+const Setting = sequelize.define('Setting', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -28,16 +27,17 @@ const FooterInfo = sequelize.define('FooterInfo', {
       allowNull: false,
       defaultValue: {},
     },
+    exchangeRate: DataTypes.DECIMAL
 }, {
-    tableName: 'FooterInfo',
+    tableName: 'Setting',
     timestamps: false ,
     freezeTableName: true, 
-    singular: 'FooterInfo', 
+    singular: 'Setting', 
 });
 
 
-FooterInfo.beforeBulkCreate(() => {
-    throw new Error('Only one instance of Footer can be created');
+Setting.beforeBulkCreate(() => {
+    throw new Error('Only one instance of Setting can be created');
   });
 
-module.exports = FooterInfo;
+module.exports = Setting;

@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op , Sequelize} = require('sequelize');
 const { Category, Product } = require('./../Models/associateModel');
 
 const AppError = require("./../utils/appError");
@@ -318,18 +318,18 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     case 'earliest':
       order.push(['createdAt', 'ASC']);
       break;
-    case 'price_dsec':
-      order.push([`multilingualData.en.price`, 'DESC']);
-      break;
-    case 'price_asec':
-      order.push([`multilingualData.en.price`, 'ASC']);
-      break;
+      case 'price_dsec':
+        order.push([Sequelize.literal(`CAST(json_unquote(json_extract(\`multilingualData\`, '$."en"."price"')) AS DECIMAL(10, 2))`), 'DESC']);
+        break;
+      case 'price_asec':
+        order.push([Sequelize.literal(`CAST(json_unquote(json_extract(\`multilingualData\`, '$."en"."price"')) AS DECIMAL(10, 2))`), 'ASC']);
+        break;
     default:
       order.push(['createdAt', 'DESC']);
   }
 
   const attributes = ['id', 'name', 'multilingualData', 'image'];
-
+console.log(order)
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
@@ -342,6 +342,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     paginate: limit,
     order,
   });
+
+  
 
   const data = docs.map(item => {
     const multilingualData = item.multilingualData[lang];

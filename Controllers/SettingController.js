@@ -1,22 +1,22 @@
 const { Op } = require('sequelize');
-const Footer= require('./../Models/FooterModel');
+const Settings= require('../Models/SettingModel');
 
-const catchAsync = require("./../utils/CatchAsync");
+const catchAsync = require("../utils/CatchAsync");
 
 exports.getAll = catchAsync(async (req, res, next) => {
 
-  const footer = await Footer.findOne();
-  res.status(200).json(footer);
+  const Setting = await Settings.findOne();
+  res.status(200).json(Setting);
 
 });
 
 exports.Update = catchAsync(async (req, res, next) => {
-  const updatedFooter = req.body;
-  const footer = await Footer.findOne();
+  const updatedSetting = req.body;
+  const Setting = await Settings.findOne();
 
-  if (footer) {
+  if (Setting) {
     
-    const existingImagesCount = (footer.images || []).length;
+    const existingImagesCount = (Setting.images || []).length;
 
     if(req.files != undefined){
     const newImages = req.files.map((file, index) => {
@@ -26,9 +26,9 @@ exports.Update = catchAsync(async (req, res, next) => {
       };
     });
 
-    updatedFooter.images = (footer.images || []).concat(newImages);
+    updatedSetting.images = (Setting.images || []).concat(newImages);
   }
-    await footer.update(updatedFooter);
+    await Setting.update(updatedSetting);
     res.status(200).json({ message: 'تم تحديث البيانات' });
   } else {
     res.status(404).json({ message: 'لم يتم التحديث!' });
@@ -41,29 +41,29 @@ exports.Delete = catchAsync(async (req, res, next) => {
     const { id } = req.params;
     const { index } = req.params;
   
-      const footer = await Footer.findByPk(id);
+      const Setting = await Settings.findByPk(id);
   
-      if (!footer) {
-        return res.status(404).json({ message: 'Footer not found' });
+      if (!Setting) {
+        return res.status(404).json({ message: 'Setting not found' });
       }
   
-      if (!Array.isArray(footer.images)) {
+      if (!Array.isArray(Setting.images)) {
         return res.status(400).json({ message: 'Images data is invalid' });
       }
   
       const imageIndex = parseInt(index);
   
-      if (isNaN(imageIndex) || imageIndex < 0 || imageIndex >= footer.images.length) {
+      if (isNaN(imageIndex) || imageIndex < 0 || imageIndex >= Setting.images.length) {
         return res.status(400).json({ message: 'Invalid image index' });
       }
   
-      footer.images.splice(imageIndex, 1);
-      footer.images = footer.images.map((image, newIndex) => ({
+      Setting.images.splice(imageIndex, 1);
+      Setting.images = Setting.images.map((image, newIndex) => ({
         index: newIndex,
         filename: image.filename,
       }));
 
-     await Footer.update({ images: footer.images }, { where: { id } });
+     await Settings.update({ images: Setting.images }, { where: { id } });
 
   
       res.status(200).json({ message: 'Image deleted successfully' });
