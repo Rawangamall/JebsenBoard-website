@@ -1,5 +1,7 @@
 const express=require("express");
 const router=express.Router();
+const multer = require("multer");
+const Upload = multer();
 
 const ProductController=require("./../Controllers/ProductController");
 const {ProductValidPOST , ProductValidPatch} = require("./../Core/Validations/Product")
@@ -29,4 +31,8 @@ router.route("/dashboard/product/:id")
 
 router.route("/dashboard/products")
       .get(auth ,authorize(["ادمن","موظف"]),ProductController.getAll)
+ 
+router.route("/dashboard/productsIncPrice")
+      .patch(auth ,authorize(["ادمن","موظف"]),Upload.none(),ProductController.PriceIncrease)
+
 module.exports=router;

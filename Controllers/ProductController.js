@@ -413,3 +413,36 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   res.status(200).json(data);
 });
 
+exports.PriceIncrease = catchAsync(async (request, response, next) => {
+  
+  const IncPercentage = parseFloat(request.body.percentage);
+  const products = await Product.findAll();
+
+  if (isNaN(IncPercentage)) {
+    return response.status(400).json({ error: "يجب ادخال نسبه رقميه فقط" });
+  }
+
+  for (const product of products) {
+    let currentPrice = parseFloat(product.multilingualData.en.price);
+
+    if (!isNaN(currentPrice)) {
+      const newPrice = currentPrice + (currentPrice * IncPercentage) / 100;
+
+      const newPriceEn = newPrice.toFixed(2);;
+      const newPriceAr = newPrice.toLocaleString('ar-EG', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+
+      const multilingualData = product.multilingualData;
+
+      multilingualData.en.price = newPriceEn;
+      multilingualData.ar.price = newPriceAr;
+
+      await Product.update({"multilingualData" : multilingualData }, {where: { "id": product.id }} );
+    }
+  }
+
+  return response.status(200).json({ message: "Updated" });
+});
+
