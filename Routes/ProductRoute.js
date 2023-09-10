@@ -29,4 +29,11 @@ router.route("/dashboard/product/:id")
 
 router.route("/dashboard/products")
       .get(auth ,authorize(["ادمن","موظف"]),ProductController.getAll)
-module.exports=router;
+
+
+router.route("/products/offer")
+      .get(ProductController.getallOffers)
+      .put(ProductController.addOffer) 
+      .delete(ProductController.deleteOffer)    
+
+      module.exports=router;
