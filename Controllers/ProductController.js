@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op , Sequelize} = require('sequelize');
 const { Category, Product } = require('./../Models/associateModel');
 
 const AppError = require("./../utils/appError");
@@ -335,18 +335,18 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     case 'earliest':
       order.push(['createdAt', 'ASC']);
       break;
-    case 'price_dsec':
-      order.push([`multilingualData.en.price`, 'DESC']);
-      break;
-    case 'price_asec':
-      order.push([`multilingualData.en.price`, 'ASC']);
-      break;
+      case 'price_dsec':
+        order.push([Sequelize.literal(`CAST(json_unquote(json_extract(\`multilingualData\`, '$."en"."price"')) AS DECIMAL(10, 2))`), 'DESC']);
+        break;
+      case 'price_asec':
+        order.push([Sequelize.literal(`CAST(json_unquote(json_extract(\`multilingualData\`, '$."en"."price"')) AS DECIMAL(10, 2))`), 'ASC']);
+        break;
     default:
       order.push(['createdAt', 'DESC']);
   }
 
   const attributes = ['id', 'name', 'multilingualData', 'image'];
-
+console.log(order)
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
@@ -359,6 +359,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     paginate: limit,
     order,
   });
+
+  
 
   const data = docs.map(item => {
     const multilingualData = item.multilingualData[lang];
@@ -507,3 +509,36 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
     next(error);
   }
 });
+exports.PriceIncrease = catchAsync(async (request, response, next) => {
+  
+  const IncPercentage = parseFloat(request.body.percentage);
+  const products = await Product.findAll();
+
+  if (isNaN(IncPercentage)) {
+    return response.status(400).json({ error: "يجب ادخال نسبه رقميه فقط" });
+  }
+
+  for (const product of products) {
+    let currentPrice = parseFloat(product.multilingualData.en.price);
+
+    if (!isNaN(currentPrice)) {
+      const newPrice = currentPrice + (currentPrice * IncPercentage) / 100;
+
+      const newPriceEn = newPrice.toFixed(2);;
+      const newPriceAr = newPrice.toLocaleString('ar-EG', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      });
+
+      const multilingualData = product.multilingualData;
+
+      multilingualData.en.price = newPriceEn;
+      multilingualData.ar.price = newPriceAr;
+
+      await Product.update({"multilingualData" : multilingualData }, {where: { "id": product.id }} );
+    }
+  }
+
+  return response.status(200).json({ message: "Updated" });
+});
+

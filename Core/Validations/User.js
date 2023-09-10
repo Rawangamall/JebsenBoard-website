@@ -32,7 +32,8 @@ exports.UserValidPOST = [
       }
       return true;
     }),
-      body('password').isString().withMessage('يجب ادخال كلمه السر') 
+      body('password').isStrongPassword().withMessage('يجب أن تكون كلمة المرور قوية. يجب أن تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز.')
+
 
 ];
 
@@ -64,5 +65,5 @@ exports.UserValidPATCH = [
       }
       return true;
     }),
-    body("password").isString().optional().withMessage('يجب ادخال كلمه السر')
-];
+    body('password').isStrongPassword().optional().withMessage('يجب أن تكون كلمة المرور قوية. يجب أن تحتوي على أحرف كبيرة وصغيرة وأرقام ورموز.')
+  ];

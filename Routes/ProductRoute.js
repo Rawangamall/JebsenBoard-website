@@ -1,5 +1,7 @@
 const express=require("express");
 const router=express.Router();
+const multer = require("multer");
+const Upload = multer();
 
 const ProductController=require("./../Controllers/ProductController");
 const {ProductValidPOST , ProductValidPatch} = require("./../Core/Validations/Product")
@@ -32,8 +34,13 @@ router.route("/dashboard/products")
 
 
 router.route("/products/offer")
-      .get(ProductController.getallOffers)
-      .put(ProductController.addOffer) 
-      .delete(ProductController.deleteOffer)    
+      .get(auth ,authorize(["ادمن","موظف"]),ProductController.getallOffers)
+      .put(auth ,authorize(["ادمن","موظف"]),ProductController.addOffer) 
+      .delete(auth ,authorize(["ادمن","موظف"]),ProductController.deleteOffer)    
 
       module.exports=router;
+ 
+router.route("/dashboard/productsIncPrice")
+      .patch(auth ,authorize(["ادمن","موظف"]),Upload.none(),ProductController.PriceIncrease)
+
+module.exports=router;

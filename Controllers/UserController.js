@@ -100,6 +100,7 @@ exports.getUser = CatchAsync(async (request, response, next) => {
     if(!user){
       return next(new AppError(`User not found`, 401));
     }
+    
     const Updateduser = await user.update({
       firstName:request.body.firstName,
       lastName:request.body.lastName,

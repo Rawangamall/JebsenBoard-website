@@ -8,7 +8,7 @@ const { Op } = require('sequelize');
 const Product = require("./../../Models/ProductModel");
 const Category = require("./../../Models/CategoryModel");
 const User = require("./../../Models/UserModel");
-const Footer = require("./../../Models/FooterModel");
+const Setting = require("./../../Models/SettingModel");
 
 // delete require.cache[require.resolve('./../../models/ProductModel')];
 
@@ -109,7 +109,7 @@ exports.removeUserIMG = function (req, res, next) {
 exports.removeSliderIMG = function (req, res, next) {
   const { id , index} = req.params;
 
-  Footer.findByPk(id).then((data) => {
+  Setting.findByPk(id).then((data) => {
     if (data != null && data.images != "") {
 
     const imageName = data.images[index].filename;

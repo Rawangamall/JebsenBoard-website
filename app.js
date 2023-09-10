@@ -9,7 +9,7 @@ const LoginRoute = require("./Routes/LoginRoute");
 const UserRoute = require("./Routes/UserRoute");
 const ProductRoute = require("./Routes/ProductRoute");
 const CategoryRoute = require("./Routes/CategoryRoute");
-const FooterRoute = require("./Routes/FooterRoute");
+const SettingRoute = require("./Routes/SettingRoute");
 
 //server
 const server = express();
@@ -44,7 +44,7 @@ server.use(LoginRoute)
 server.use(UserRoute)
 server.use(CategoryRoute)
 server.use(ProductRoute)
-server.use(FooterRoute)
+server.use(SettingRoute)
 
 //Not Found Middleware
 server.use((request, response, next) => {
