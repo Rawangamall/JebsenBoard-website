@@ -21,15 +21,14 @@ const Product = sequelize.define(
         key: 'id'
       }
     },
+   
     image: DataTypes.STRING,
-    offer: DataTypes.INTEGER
+    offer: DataTypes.INTEGER,
+
   },
   { timestamps: true }
 );
 
-// Product.associate = function (models) {
-//   Product.belongsTo(models.CategoryModel, { foreignKey: 'category_id', as: 'category' });
-// };
 
   SequelizePaginate.paginate(Product);
 
