@@ -1,5 +1,6 @@
 const { Op , Sequelize} = require('sequelize');
 const { Category, Product } = require('./../Models/associateModel');
+const Settings = require('./../Models/SettingModel');
 
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
@@ -260,7 +261,6 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
     if (!product) {
       return next(new AppError('لم يتم العثور على المنتج', 404));
     }
-console.log("product",product);
     await product.destroy(); // Delete the product
     res.status(200).json({ message: 'تم حذف المنتج بنجاح' });
   } catch (error) {
@@ -270,12 +270,14 @@ console.log("product",product);
 
 exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const lang = request.headers.lang || 'en';
+  const currency = request.headers.currency || 'EGP';
   const categoryID = request.query.categoryID;
   const page = parseInt(request.query.page) || 1;
   const limit = parseInt(request.query.limit) || 10;
   const sort = request.query.sort || 'newest';
   const style = request.query.style || '';
   const material = request.query.material || '';
+  const Setting = await Settings.findByPk(1);
 
 
   const whereClause = {
@@ -287,14 +289,14 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     attributes: ['id', 'multilingualData'],
   });
 
-  const prices = preData.map(
-    item => item.multilingualData.en.price
-  );
 
-  const leastPrice = Math.min(...prices);
-  const highestPrice = Math.max(...prices);
-  const minPrice = parseFloat(request.query.minPrice) || leastPrice;
-  const maxPrice = parseFloat(request.query.maxPrice) || highestPrice + 1;
+   minPrice = parseFloat(request.query.minPrice) || 0;
+   maxPrice = parseFloat(request.query.maxPrice) || Number.MAX_VALUE;;
+
+   if(currency == "USD"){
+    minPrice = minPrice * Setting.exchangeRate
+    maxPrice = maxPrice * Setting.exchangeRate
+   }
 
   const andConditions = [];
 
@@ -329,7 +331,6 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   }
 
   const attributes = ['id', 'name', 'multilingualData', 'image'];
-console.log(order)
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
@@ -345,29 +346,25 @@ console.log(order)
 
   
 
-  const data = docs.map(item => {
-    const multilingualData = item.multilingualData[lang];
-    const {
-      depth,
-      price,
-      style,
-      height,
-      material,
-      description,
-    } = multilingualData;
+  const data = await Promise.all (docs.map(async item => {
+
+    if(currency == "USD"){
+      item.multilingualData.en.price = (item.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
+      item.multilingualData.ar.price = parseFloat(item.multilingualData.en.price).toLocaleString('ar-EG');
+    }
 
     return {
       id: item.id,
       name: item.name,
       image: item.image,
-      depth,
-      price,
-      style,
-      height,
-      material,
-      description,
+      depth:item.multilingualData[lang].depth,
+      price:item.multilingualData[lang].price,
+      style:item.multilingualData[lang].style,
+      height:item.multilingualData[lang].height,
+      material:item.multilingualData[lang].material,
+      description:item.multilingualData[lang].description,
     };
-  });
+  }));
 
   if(data.length ==0){
     return next(new AppError(`There's no products!`, 400));
@@ -378,8 +375,6 @@ console.log(order)
     currentPage: page,
     totalPages: pages,
     totalProducts: total,
-    leastPrice: leastPrice,
-    highestPrice: highestPrice,
     styles: [...new Set(preData.map(item => item.multilingualData[lang].style))],
     materials: [...new Set(preData.map(item => item.multilingualData[lang].material))],
   });
