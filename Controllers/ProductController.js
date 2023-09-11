@@ -26,18 +26,35 @@ exports.getAll = catchAsync(async (req, res, next) => {
     if (lang === 'en' || lang === 'ar') {
       modifiedProducts = rows.map(product => {
         const plainProduct = product.get({ plain: true });
+        let PriceAfterOffer = null;
+        if(plainProduct.offer)
+        {
+          price = product.multilingualData['en'].price;
+          PriceAfterOffer =  price - (price * plainProduct.offer / 100)
+          if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
+          if (lang === 'ar') {
+            PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+          }
+        }
+        
         return {
           ...plainProduct,
-          multilingualData: plainProduct.multilingualData[lang]
+          multilingualData: plainProduct.multilingualData[lang],
+          PriceAfterOffer:  PriceAfterOffer
         };
       });
     }
-    else if(lang === null){
+    else if (lang === null) {
+      modifiedProducts = rows.map(product => {
+       
 
-     modifiedProducts = rows.map(product => {
         const plainProduct = product.get({ plain: true });
         return {
           ...plainProduct,
+          PriceAfterOffer: plainProduct.multilingualData['ar'].price - (plainProduct.multilingualData['ar'].price * plainProduct.offer / 100), 
           multilingualData: plainProduct.multilingualData['ar']
         };
       });
@@ -408,6 +425,85 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   res.status(200).json(data);
 });
 
+exports.addOffer = catchAsync(async (req, res, next) => {
+  const productIDs = req.body.products; // Assuming req.body.products is an array of product IDs
+  const offer = req.body.offer;
+
+  try {
+    // Find all products by their IDs
+    const products = await Product.findAll({
+      where: {
+        id: productIDs,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      return next(new AppError('No products found', 404));
+    }
+
+    // Update the offer for each product
+    for (const product of products) {
+      product.offer = offer;
+      await product.save();
+    }
+
+    res.status(200).json(products);
+  } catch (error) {
+    next(error);
+  }
+});
+
+exports.getallOffers = catchAsync(async (req, res, next) => {
+  try {
+    const allOffers = await Product.findAll({
+      attributes: ['offer'], // Specify the column you want to retrieve
+      where: {
+        offer: {
+          [Op.gt]: 0,
+        },
+      },
+      group: ['offer'], // Use the group option to group by the offer column
+    });
+
+    if (!allOffers || allOffers.length === 0) {
+      return next(new AppError('No offers found', 404));
+    }
+
+    res.status(200).json(allOffers );
+  } catch (error) {
+    next(error);
+  }
+}
+
+);
+
+
+exports.deleteOffer = catchAsync(async (req, res, next) => {
+  const offer = req.body.offer; // Assuming req.body.products is an array of product IDs
+
+  try {
+    // Find all products by their IDs
+    const products = await Product.findAll({
+      where: {
+        offer: offer,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      return next(new AppError('No products with that offer found', 404));
+    }
+
+    // Update the offer for each product
+    for (const product of products) {
+      product.offer = 0;
+      await product.save();
+    }
+
+    res.status(200).json("Offer deleted successfully");
+  } catch (error) {
+    next(error);
+  }
+});
 exports.PriceIncrease = catchAsync(async (request, response, next) => {
   
   const IncPercentage = parseFloat(request.body.percentage);

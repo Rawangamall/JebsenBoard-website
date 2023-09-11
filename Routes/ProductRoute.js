@@ -31,6 +31,14 @@ router.route("/dashboard/product/:id")
 
 router.route("/dashboard/products")
       .get(auth ,authorize(["ادمن","موظف"]),ProductController.getAll)
+
+
+router.route("/products/offer")
+      .get(auth ,authorize(["ادمن","موظف"]),ProductController.getallOffers)
+      .put(auth ,authorize(["ادمن","موظف"]),ProductController.addOffer) 
+      .delete(auth ,authorize(["ادمن","موظف"]),ProductController.deleteOffer)    
+
+      module.exports=router;
  
 router.route("/dashboard/productsIncPrice")
       .patch(auth ,authorize(["ادمن","موظف"]),Upload.none(),ProductController.PriceIncrease)

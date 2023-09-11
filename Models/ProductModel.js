@@ -21,7 +21,8 @@ const Product = sequelize.define(
         key: 'id'
       }
     },
-    image: DataTypes.STRING
+    image: DataTypes.STRING,
+    offer: DataTypes.INTEGER
   },
   { timestamps: true }
 );
