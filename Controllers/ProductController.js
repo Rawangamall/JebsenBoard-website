@@ -295,6 +295,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const style = request.query.style || '';
   const material = request.query.material || '';
   const Setting = await Settings.findByPk(1);
+  minPrice = parseFloat(request.query.minPrice);
+  maxPrice = parseFloat(request.query.maxPrice);
 
 
   const whereClause = {
@@ -306,14 +308,19 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     attributes: ['id', 'multilingualData'],
   });
 
+ if (currency == "USD") {
+    minPrice = minPrice * Setting.exchangeRate;
+    maxPrice = maxPrice * Setting.exchangeRate;
+  }
 
-   minPrice = parseFloat(request.query.minPrice) || 0;
-   maxPrice = parseFloat(request.query.maxPrice) || Number.MAX_VALUE;;
-
-   if(currency == "USD"){
-    minPrice = minPrice * Setting.exchangeRate
-    maxPrice = maxPrice * Setting.exchangeRate
-   }
+  const priceCondition = {};
+  if (!isNaN(minPrice) && !isNaN(maxPrice)) {
+    priceCondition[Op.between] = [minPrice, maxPrice];
+  } else if (!isNaN(minPrice)) {
+    priceCondition[Op.gte] = minPrice;
+  } else if (!isNaN(maxPrice)) {
+    priceCondition[Op.lte] = maxPrice;
+  }
 
   const andConditions = [];
 
@@ -351,9 +358,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
-      [`multilingualData.en.price`]: {
-        [Op.between]: [minPrice, maxPrice],
-      },
+    [`multilingualData.en.price`]: priceCondition,
     },
     attributes,
     page,
