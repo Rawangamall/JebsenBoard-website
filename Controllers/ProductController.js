@@ -133,7 +133,7 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     if (!product) {
       return next(new AppError('لم يتم العثور على منتج', 404));
     }
-    console.log(lang)
+
     if(currency == "USD"){
       product.multilingualData.en.price = (product.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
       product.multilingualData.ar.price = parseFloat(product.multilingualData.en.price).toLocaleString('ar-EG');
@@ -320,6 +320,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const sort = request.query.sort || 'newest';
   const style = request.query.style || '';
   const material = request.query.material || '';
+  const execute = request.query.execute || '';
   const Setting = await Settings.findByPk(1);
   minPrice = parseFloat(request.query.minPrice);
   maxPrice = parseFloat(request.query.maxPrice);
@@ -357,6 +358,10 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   if (material) {
    andConditions.push({ [`multilingualData.${lang}.material`]: material });
   }
+
+  if (execute) {
+    andConditions.push({ [`multilingualData.${lang}.execute`]: execute });
+   }
 
   if (andConditions.length > 0) {
    whereClause[Op.and] = andConditions;
@@ -425,6 +430,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     totalProducts: total,
     styles: [...new Set(preData.map(item => item.multilingualData[lang].style))],
     materials: [...new Set(preData.map(item => item.multilingualData[lang].material))],
+    execute: [...new Set(preData.map(item => item.multilingualData[lang].execute))],
   });
 });
 
