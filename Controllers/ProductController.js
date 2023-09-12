@@ -99,6 +99,7 @@ exports.addProduct = catchAsync(async (request, response, next) => {
         material: request.body.material,
         style: request.body.style,
         price: request.body.price,
+        execute: request.body.execute
       },
       ar: {
         description: request.body.description_ar,
@@ -107,6 +108,7 @@ exports.addProduct = catchAsync(async (request, response, next) => {
         material: request.body.material_ar,
         style: request.body.style_ar,
         price: request.body.price_ar,
+        execute: request.body.execute_ar
       }
     },
     category_id: request.body.category_id,
@@ -251,6 +253,19 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
       // If req.body.style_ar is empty or not provided, remove the "style" property from updatedMultilingualData
       delete updatedMultilingualData.ar.style;
     }
+
+    if (req.body.execute) { 
+      updatedMultilingualData.en.execute = req.body.execute;
+    } else {
+      delete updatedMultilingualData.en.execute;
+    }
+
+    if (req.body.execute) { 
+      updatedMultilingualData.ar.execute = req.body.execute_ar;
+    } else {
+      delete updatedMultilingualData.ar.execute;
+    }
+
 
     // Create a new product object with the updated data
     const updatedProduct = {

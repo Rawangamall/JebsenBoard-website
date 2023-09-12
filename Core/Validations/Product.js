@@ -1,7 +1,9 @@
 const { body, param } = require("express-validator");
 const Product = require("../../Models/ProductModel");
 const { Op } = require('sequelize');
+const validProductExecute_ar = ['تم التنفيذ بمقاس من قبل', 'لم يتم التنفيذ بمقاس من قبل'];
 
+const validProductExecute_en = ['Not executed with a previous measurement', 'Executed with a measurement'];
 // Validation error messages
 const errorMessages = {
   required: "يرجى إدخال {{field}}",
@@ -79,6 +81,9 @@ const validationRules = {
       .optional()
       .isInt().withMessage(errorMessages.numeric),
   ],
+
+  
+  
 };
 
 async function checkIfProductNameExists(productName, id) {
@@ -105,13 +110,30 @@ exports.ProductValidPOST = [
     .isLength({ min: 2, max: 100 }).withMessage("اسم المنتج يجب أن يكون بين 3 و 100 حرف")
     .custom(async (value, { req }) => {
 
-
       const productNameExists = await checkIfProductNameExists(value);
       if (productNameExists.length > 0) {
         throw new Error("اسم المنتج موجود بالفعل");
       }
       return true;
     }),
+    body("execute_ar")
+    .notEmpty().withMessage("يرجى إدخال النص بالعربي")
+    .custom(async (value, { req }) => {
+      if (!validProductExecute_ar.includes(value)) {
+    throw new Error("تم التنفيذ بمقاس من قبل', 'لم يتم التنفيذ بمقاس من قبل");
+      }
+      return true;
+    }),
+    body("execute")
+    .notEmpty().withMessage("يرجى إدخال النص بالإنجليزي")
+    .custom(async (value, { req }) => {
+      if (!validProductExecute_en.includes(value)) {
+      throw new Error("يجب أن تكون إحدى القيم: 'Not executed with a previous measurement' أو 'Executed with a measurement'");
+      }
+      return true;
+    }),
+
+
   ...validationRules.description,
   ...validationRules.style,
   ...validationRules.material,
@@ -122,6 +144,7 @@ exports.ProductValidPOST = [
 ];
 
 exports.ProductValidPatch = [
+
   ...validationRules.name,
   ...validationRules.description,
   ...validationRules.style,
@@ -130,4 +153,20 @@ exports.ProductValidPatch = [
   ...validationRules.height,
   ...validationRules.price,
   ...validationRules.category_id,
+  body("execute_ar")
+  .optional()
+  .custom(async (value, { req }) => {
+    if (!validProductExecute_ar.includes(value)) {
+      throw new Error("تم التنفيذ بمقاس من قبل', 'لم يتم التنفيذ بمقاس من قبل");
+    }
+    return true;
+  }),
+  body("execute")
+  .optional()  
+  .custom(async (value, { req }) => {
+    if (!validProductExecute_en.includes(value)) {
+    throw new Error("يجب أن تكون إحدى القيم: 'Not executed with a previous measurement' أو 'Executed with a measurement'");
+    }
+    return true;
+  }),
 ];
