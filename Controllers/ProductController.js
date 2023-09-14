@@ -124,12 +124,19 @@ exports.getProduct = catchAsync(async (req, res, next) => {
   try {
 
     const productId = req.params.id;
-  const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
+    const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
+    const currency = req.headers.currency || 'EGP';
 
+    const Setting = await Settings.findByPk(1);
     const product = await Product.findByPk(productId);
 
     if (!product) {
       return next(new AppError('لم يتم العثور على منتج', 404));
+    }
+
+    if(currency == "USD"){
+      product.multilingualData.en.price = (product.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
+      product.multilingualData.ar.price = parseFloat(product.multilingualData.en.price).toLocaleString('ar-EG');
     }
 
     const relatedProducts = await Product.findAll({
@@ -140,10 +147,14 @@ exports.getProduct = catchAsync(async (req, res, next) => {
       limit: 3 
     });
 
-    // Modify the relatedProducts based on language condition
     let modifiedRelatedProducts ;
     if(lang === 'en' || lang === 'ar') {
      modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
+
+      if(currency == "USD"){
+        relatedProduct.multilingualData.en.price = (relatedProduct.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
+        relatedProduct.multilingualData.ar.price = parseFloat(relatedProduct.multilingualData.en.price).toLocaleString('ar-EG');
+      }
         return {
           ...relatedProduct.get({ plain: true }),
           multilingualData: relatedProduct.multilingualData[lang]
@@ -309,7 +320,10 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const sort = request.query.sort || 'newest';
   const style = request.query.style || '';
   const material = request.query.material || '';
+  const execute = request.query.execute || '';
   const Setting = await Settings.findByPk(1);
+  minPrice = parseFloat(request.query.minPrice);
+  maxPrice = parseFloat(request.query.maxPrice);
 
 
   const whereClause = {
@@ -321,14 +335,19 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     attributes: ['id', 'multilingualData'],
   });
 
+ if (currency == "USD") {
+    minPrice = minPrice * Setting.exchangeRate;
+    maxPrice = maxPrice * Setting.exchangeRate;
+  }
 
-   minPrice = parseFloat(request.query.minPrice) || 0;
-   maxPrice = parseFloat(request.query.maxPrice) || Number.MAX_VALUE;;
-
-   if(currency == "USD"){
-    minPrice = minPrice * Setting.exchangeRate
-    maxPrice = maxPrice * Setting.exchangeRate
-   }
+  const priceCondition = {};
+  if (!isNaN(minPrice) && !isNaN(maxPrice)) {
+    priceCondition[Op.between] = [minPrice, maxPrice];
+  } else if (!isNaN(minPrice)) {
+    priceCondition[Op.gte] = minPrice;
+  } else if (!isNaN(maxPrice)) {
+    priceCondition[Op.lte] = maxPrice;
+  }
 
   const andConditions = [];
 
@@ -339,6 +358,10 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   if (material) {
    andConditions.push({ [`multilingualData.${lang}.material`]: material });
   }
+
+  if (execute) {
+    andConditions.push({ [`multilingualData.${lang}.execute`]: execute });
+   }
 
   if (andConditions.length > 0) {
    whereClause[Op.and] = andConditions;
@@ -366,9 +389,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
-      [`multilingualData.en.price`]: {
-        [Op.between]: [minPrice, maxPrice],
-      },
+    [`multilingualData.en.price`]: priceCondition,
     },
     attributes,
     page,
@@ -399,7 +420,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
   }));
 
   if(data.length ==0){
-    return next(new AppError(`There's no products!`, 400));
+    return next(new AppError(`There's no products - لا يوجد منتج`, 400));
   }
 
   response.status(200).json({
@@ -409,6 +430,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     totalProducts: total,
     styles: [...new Set(preData.map(item => item.multilingualData[lang].style))],
     materials: [...new Set(preData.map(item => item.multilingualData[lang].material))],
+    execute: [...new Set(preData.map(item => item.multilingualData[lang].execute))],
   });
 });
 
