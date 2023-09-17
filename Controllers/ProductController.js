@@ -415,7 +415,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       order.push(['createdAt', 'DESC']);
   }
 
-  const attributes = ['id', 'name', 'multilingualData', 'image'];
+  const attributes = ['id', 'name', 'multilingualData', 'image','offer'];
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
@@ -429,9 +429,24 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
   const data = await Promise.all (docs.map(async item => {
 
+    let PriceAfterOffer = null;
+    if(item.offer != 0)
+    {
+      price = item.multilingualData['en'].price;
+      PriceAfterOffer = ( price - (price * item.offer / 100)).toFixed(2)
+    }
+
     if(currency == "USD"){
       item.multilingualData.en.price = (item.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
       item.multilingualData.ar.price = parseFloat(item.multilingualData.en.price).toLocaleString('ar-EG');
+        if(PriceAfterOffer != null){
+          PriceAfterOffer = (PriceAfterOffer / Setting.exchangeRate).toFixed(2);
+        }
+    }
+    
+    if (lang === 'ar' && PriceAfterOffer != null) {
+      PriceAfterOffer = parseFloat(PriceAfterOffer).toLocaleString('ar-EG');
+      item.offer = parseFloat(item.offer).toLocaleString('ar-EG');
     }
 
     return {
@@ -444,6 +459,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       height:item.multilingualData[lang].height,
       material:item.multilingualData[lang].material,
       description:item.multilingualData[lang].description,
+      PriceAfterOffer,
+      offer:item.offer,
     };
   }));
 
@@ -491,6 +508,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
   res.status(200).json(data);
 });
+
 
 exports.addOffer = catchAsync(async (req, res, next) => {
   const productIDs = req.body.products; // Assuming req.body.products is an array of product IDs
