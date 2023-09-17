@@ -150,6 +150,20 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     let modifiedRelatedProducts ;
     if(lang === 'en' || lang === 'ar') {
      modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
+      // const plainProduct = product.get({ plain: true });
+      let PriceAfterOffer = null;
+      if(relatedProduct.offer)
+      {
+        price = relatedProduct.multilingualData['en'].price;
+        PriceAfterOffer =  price - (price * relatedProduct.offer / 100)
+        if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
+        if (lang === 'ar') {
+          PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+        }
+      }
 
       if(currency == "USD"){
         relatedProduct.multilingualData.en.price = (relatedProduct.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
@@ -157,7 +171,8 @@ exports.getProduct = catchAsync(async (req, res, next) => {
       }
         return {
           ...relatedProduct.get({ plain: true }),
-          multilingualData: relatedProduct.multilingualData[lang]
+          multilingualData: relatedProduct.multilingualData[lang],
+          PriceAfterOffer:  PriceAfterOffer
         };
      
     });
@@ -168,9 +183,24 @@ exports.getProduct = catchAsync(async (req, res, next) => {
 
   if(lang === "en" || lang === "ar")
   {
+    
+      let PriceAfterOffer = null;
+      if(product.offer)
+      {
+        price = product.multilingualData['en'].price;
+        PriceAfterOffer =  price - (price * product.offer / 100)
+        if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
+        if (lang === 'ar') {
+          PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+        }
+      }
       modifiedProduct = {
       ...product.get({ plain: true }),
-      multilingualData: product.multilingualData[lang]
+      multilingualData: product.multilingualData[lang],
+      PriceAfterOffer:  PriceAfterOffer
     };
   }
   
@@ -421,6 +451,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     return next(new AppError(`There's no products - لا يوجد منتج`, 400));
   }
 
+  
   response.status(200).json({
     products: data,
     currentPage: page,

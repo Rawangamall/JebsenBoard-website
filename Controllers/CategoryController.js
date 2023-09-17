@@ -144,15 +144,38 @@ exports.getCategory = catchAsync(async (req, res, next) => {
   }
 
   console.log("categoryData",categoryData)
-  const productsCount = await Product.count({
+  const products = await Product.count({
     where: { category_id: id }
   });
+   modifiedProducts = products.map(product => {
+    const plainProduct = product.get({ plain: true });
+    let PriceAfterOffer = null;
+    if(plainProduct.offer)
+    {
+      price = product.multilingualData['en'].price;
+      PriceAfterOffer =  price - (price * plainProduct.offer / 100)
+      if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
+      if (lang === 'ar') {
+        PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+    }
+    
+    return {
+      ...plainProduct,
+      multilingualData: plainProduct.multilingualData[lang],
+      PriceAfterOffer:  PriceAfterOffer
+    };
+  });
+
 
   res.status(200).json({
     status: 'success',
     data: {
       categoryData,
-      productsCount
+      productsCount:modifiedProducts
     }
   });
 });

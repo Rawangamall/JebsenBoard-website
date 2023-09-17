@@ -29,7 +29,7 @@ exports.Update = catchAsync(async (req, res, next) => {
       updatedSettingData.images = (existingSetting.images || []).concat(newImages);
     }
 
-    // const MapLocation = existingSetting.mapLocation;
+    const MapLocation = existingSetting.mapLocation;
     
     if (updatedSettingData.mapLocation !== undefined || updatedSettingData.mapLocation) {
       console.log("inside", updatedSettingData.mapLocation);
