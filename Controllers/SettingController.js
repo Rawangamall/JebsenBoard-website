@@ -13,6 +13,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
 exports.Update = catchAsync(async (req, res, next) => {
   const updatedSettingData = req.body;
   const existingSetting = await Settings.findOne();
+  const id=1;
 
   if (existingSetting) {
     const existingImagesCount = (existingSetting.images || []).length;
@@ -30,27 +31,31 @@ exports.Update = catchAsync(async (req, res, next) => {
 
     const MapLocation = existingSetting.mapLocation;
     
-    if (updatedSettingData.mapLocation !== undefined || updatedSettingData.mapLocation !== "") {
+    if (updatedSettingData.mapLocation !== undefined || updatedSettingData.mapLocation) {
+      console.log("inside", updatedSettingData.mapLocation);
       MapLocation.latitude = updatedSettingData.mapLocation.latitude;
       MapLocation.longitude = updatedSettingData.mapLocation.longitude;
     } 
-    else if (updatedSettingData.mapLocation == "") {
-      MapLocation.latitude = "";
-      MapLocation.longitude = "";
-    }
 
+    // Update the existingSetting with new data
     existingSetting.set({
       ...updatedSettingData,
       mapLocation: MapLocation
-    });
+    })
+     
+       await Settings.update(updatedSettingData, {
+        where: { id },
+        returning: true, 
+      });
+ 
+      res.status(200).json({ message: ' تم التحديث!' });
+    } else {
+      res.status(404).json({ message: 'لم يتم التحديث!' });
+    }
+  });
 
-    await existingSetting.save();
 
-    res.status(200).json({ message: ' تم التحديث!' });
-  } else {
-    res.status(404).json({ message: 'لم يتم التحديث!' });
-  }
-});
+
 
 
 
