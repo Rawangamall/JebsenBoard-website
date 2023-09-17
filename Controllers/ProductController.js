@@ -397,8 +397,6 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     order,
   });
 
-  
-
   const data = await Promise.all (docs.map(async item => {
 
     if(currency == "USD"){
@@ -453,6 +451,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   const data = await Product.findAll({
     where: query,
     attributes: projection,
+    limit: 6,
     });
   
   if (data.length === 0) {
