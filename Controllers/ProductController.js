@@ -542,6 +542,28 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
     next(error);
   }
 });
+
+exports.getOfferProducts = catchAsync(async (req, res, next) => {
+
+  const offer = req.params.value; 
+  try {
+    // Find all products by their IDs
+    const products = await Product.findAll({
+      where: {
+        offer: offer,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      return next(new AppError('No products with that offer found', 404));
+    }
+
+    res.status(200).json(products);
+  } catch (error) {
+    next(error);
+  }
+});
+
 exports.PriceIncrease = catchAsync(async (request, response, next) => {
   
   const IncPercentage = parseFloat(request.body.percentage);

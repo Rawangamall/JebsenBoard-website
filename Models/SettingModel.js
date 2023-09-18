@@ -28,12 +28,21 @@ const Setting = sequelize.define('Setting', {
       defaultValue: {},
     },
     exchangeRate: DataTypes.DECIMAL
+    ,
+mapLocation: {
+      
+  //latitude,longitude 
+  type: DataTypes.JSON,
+  allowNull: false,
+  defaultValue: {},
+},
 }, {
     tableName: 'Setting',
     timestamps: false ,
     freezeTableName: true, 
     singular: 'Setting', 
-});
+}
+);
 
 
 Setting.beforeBulkCreate(() => {

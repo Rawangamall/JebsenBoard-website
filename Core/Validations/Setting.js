@@ -11,5 +11,6 @@ exports.SettingPatch = [
     body('instagramlink_1').isURL().optional().withMessage(" يجب ادخال لينك الانستجرام"),
     body('instagramlink_2').isURL().optional().withMessage(" يجب ادخال لينك الانستجرام"),
     body('exchangeRate').isDecimal().optional().withMessage("  يجب ادخال سعر فرق العمله بالارقام "),
+    body('mapLocation').isJSON().optional().withMessage("يجب ادخال خريطه الموقع بالارقام"),
 ];
 

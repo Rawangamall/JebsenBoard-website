@@ -39,8 +39,12 @@ router.route("/products/offer")
       .delete(auth ,authorize(["ادمن","موظف"]),ProductController.deleteOffer)    
 
       module.exports=router;
+
+ router.route("/products/offer/:value")
+      .get(auth ,authorize(["ادمن","موظف"]),ProductController.getOfferProducts)
  
 router.route("/dashboard/productsIncPrice")
       .patch(auth ,authorize(["ادمن","موظف"]),Upload.none(),ProductController.PriceIncrease)
+
 
 module.exports=router;

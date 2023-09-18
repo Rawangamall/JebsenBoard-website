@@ -11,29 +11,47 @@ exports.getAll = catchAsync(async (req, res, next) => {
 });
 
 exports.Update = catchAsync(async (req, res, next) => {
-  const updatedSetting = req.body;
-  const Setting = await Settings.findOne();
+  const updatedSettingData = req.body;
+  const existingSetting = await Settings.findOne();
 
-  if (Setting) {
+  if (existingSetting) {
+    const existingImagesCount = (existingSetting.images || []).length;
+
+    if (req.files != undefined) {
+      const newImages = req.files.map((file, index) => {
+        return {
+          index: existingImagesCount + index,
+          filename: file.filename
+        };
+      });
+
+      updatedSettingData.images = (existingSetting.images || []).concat(newImages);
+    }
+
+    const MapLocation = existingSetting.mapLocation;
     
-    const existingImagesCount = (Setting.images || []).length;
+    if (updatedSettingData.mapLocation !== undefined || updatedSettingData.mapLocation !== "") {
+      MapLocation.latitude = updatedSettingData.mapLocation.latitude;
+      MapLocation.longitude = updatedSettingData.mapLocation.longitude;
+    } 
+    else if (updatedSettingData.mapLocation == "") {
+      MapLocation.latitude = "";
+      MapLocation.longitude = "";
+    }
 
-    if(req.files != undefined){
-    const newImages = req.files.map((file, index) => {
-      return {
-        index: existingImagesCount + index,
-        filename: file.filename
-      };
+    existingSetting.set({
+      ...updatedSettingData,
+      mapLocation: MapLocation
     });
 
-    updatedSetting.images = (Setting.images || []).concat(newImages);
-  }
-    await Setting.update(updatedSetting);
-    res.status(200).json({ message: 'تم تحديث البيانات' });
+    await existingSetting.save();
+
+    res.status(200).json({ message: ' تم التحديث!' });
   } else {
     res.status(404).json({ message: 'لم يتم التحديث!' });
   }
 });
+
 
 
 exports.Delete = catchAsync(async (req, res, next) => {
