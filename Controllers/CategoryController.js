@@ -120,14 +120,6 @@ exports.getCategory = catchAsync(async (req, res, next) => {
     createdAt
   };
 
-  // if (lang === 'ar' || lang === null) {
-  //   categoryData.name_ar = name_ar;
-  // }
-
-  // if (lang === 'en' || lang === null) {
-  //   categoryData.name_en = name_en;
-  // }
-
   if(lang === null)
   {
     categoryData.name_ar = name_ar;
@@ -143,7 +135,6 @@ exports.getCategory = catchAsync(async (req, res, next) => {
     categoryData.name = name_en;
   }
 
-  console.log("categoryData",categoryData)
   const products = await Product.count({
     where: { category_id: id }
   });
