@@ -5,6 +5,25 @@ const Settings = require('./../Models/SettingModel');
 const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 
+
+//function to calculate price after offer
+function PriceAfterOfferFunc(price,offer,lang)
+{
+  let PriceAfterOffer = null;
+    price = price;
+    PriceAfterOffer =  price - (price * offer / 100)
+
+    if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
+    if (lang === 'ar'|| lang == null) {
+      PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+  
+  return PriceAfterOffer;
+}
+
 exports.getAll = catchAsync(async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -23,42 +42,23 @@ exports.getAll = catchAsync(async (req, res, next) => {
     }
 
     let modifiedProducts;
-    if (lang === 'en' || lang === 'ar') {
       modifiedProducts = rows.map(product => {
         const plainProduct = product.get({ plain: true });
-        let PriceAfterOffer = null;
-        if(plainProduct.offer)
-        {
-          price = product.multilingualData['en'].price;
-          PriceAfterOffer =  price - (price * plainProduct.offer / 100)
-          if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
-          if (lang === 'ar') {
-            PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          }
+        if (lang === 'en' || lang === 'ar') {
+
+//add currency code
         }
+        let PriceAfterOffer = null;
+        if(plainProduct.offer) PriceAfterOffer= PriceAfterOfferFunc(plainProduct.multilingualData['en'].price,plainProduct.offer,lang);
         
         return {
           ...plainProduct,
-          multilingualData: plainProduct.multilingualData[lang],
+          multilingualData: lang==null? plainProduct.multilingualData : plainProduct.multilingualData[lang],
           PriceAfterOffer:  PriceAfterOffer
         };
       });
-    }
-    else if (lang === null) {
-      modifiedProducts = rows.map(product => {
-       
-
-        const plainProduct = product.get({ plain: true });
-        return {
-          ...plainProduct,
-          PriceAfterOffer: plainProduct.multilingualData['ar'].price - (plainProduct.multilingualData['ar'].price * plainProduct.offer / 100), 
-          multilingualData: plainProduct.multilingualData['ar']
-        };
-      });
-    }
+    
+    
     res.status(200).json({
       currentPage: page,
       totalPages: Math.ceil(count / limit),
@@ -126,7 +126,6 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     const productId = req.params.id;
     const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
     const currency = req.headers.currency || 'EGP';
-
     const Setting = await Settings.findByPk(1);
     const product = await Product.findByPk(productId);
 
@@ -148,67 +147,42 @@ exports.getProduct = catchAsync(async (req, res, next) => {
     });
 
     let modifiedRelatedProducts ;
-    if(lang === 'en' || lang === 'ar') {
      modifiedRelatedProducts = relatedProducts.map(relatedProduct => {
-      // const plainProduct = product.get({ plain: true });
-      let PriceAfterOffer = null;
-      if(relatedProduct.offer)
-      {
-        price = relatedProduct.multilingualData['en'].price;
-        PriceAfterOffer =  price - (price * relatedProduct.offer / 100)
-        if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
-        if (lang === 'ar') {
-          PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
-        }
-      }
-
+      if(lang === 'en' || lang === 'ar') {
       if(currency == "USD"){
         relatedProduct.multilingualData.en.price = (relatedProduct.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
         relatedProduct.multilingualData.ar.price = parseFloat(relatedProduct.multilingualData.en.price).toLocaleString('ar-EG');
       }
+    }
+
+    let PriceAfterOffer = null;
+    if(relatedProduct.offer) PriceAfterOffer= PriceAfterOfferFunc(relatedProduct.multilingualData['en'].price,relatedProduct.offer,lang);
         return {
           ...relatedProduct.get({ plain: true }),
-          multilingualData: relatedProduct.multilingualData[lang],
-          PriceAfterOffer:  PriceAfterOffer
+          PriceAfterOffer: PriceAfterOffer,
+          multilingualData: lang ? relatedProduct.multilingualData[lang]: relatedProduct.multilingualData
         };
-     
     });
-  }
-  
+
 
   let modifiedProduct;
 
-  if(lang === "en" || lang === "ar")
-  {
-    
-      let PriceAfterOffer = null;
-      if(product.offer)
-      {
-        price = product.multilingualData['en'].price;
-        PriceAfterOffer =  price - (price * product.offer / 100)
-        if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
-        if (lang === 'ar') {
-          PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
-        }
-      }
+ 
+    let PriceAfterOffer = null;
+    if(product.offer) PriceAfterOffer= PriceAfterOfferFunc(product.multilingualData['en'].price,product.offer,lang);
+   
       modifiedProduct = {
       ...product.get({ plain: true }),
-      multilingualData: product.multilingualData[lang],
-      PriceAfterOffer:  PriceAfterOffer
+      PriceAfterOffer: PriceAfterOffer,
+      multilingualData: lang==null?  product.multilingualData: product.multilingualData[lang]
     };
-  }
+  
   
     res.status(200).json({
       status: 'success',
       data: {
         product:  modifiedProduct ? modifiedProduct : product,
-        relatedProducts: modifiedRelatedProducts ? modifiedRelatedProducts : relatedProducts
+        relatedProducts: modifiedRelatedProducts 
       }
     });
   } catch (error) {
@@ -415,7 +389,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       order.push(['createdAt', 'DESC']);
   }
 
-  const attributes = ['id', 'name', 'multilingualData', 'image','offer'];
+  const attributes = ['id', 'name', 'multilingualData', 'image'];
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
@@ -429,24 +403,9 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
   const data = await Promise.all (docs.map(async item => {
 
-    let PriceAfterOffer = null;
-    if(item.offer != 0)
-    {
-      price = item.multilingualData['en'].price;
-      PriceAfterOffer = ( price - (price * item.offer / 100)).toFixed(2)
-    }
-
     if(currency == "USD"){
       item.multilingualData.en.price = (item.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
       item.multilingualData.ar.price = parseFloat(item.multilingualData.en.price).toLocaleString('ar-EG');
-        if(PriceAfterOffer != null){
-          PriceAfterOffer = (PriceAfterOffer / Setting.exchangeRate).toFixed(2);
-        }
-    }
-    
-    if (lang === 'ar' && PriceAfterOffer != null) {
-      PriceAfterOffer = parseFloat(PriceAfterOffer).toLocaleString('ar-EG');
-      item.offer = parseFloat(item.offer).toLocaleString('ar-EG');
     }
 
     return {
@@ -459,8 +418,6 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       height:item.multilingualData[lang].height,
       material:item.multilingualData[lang].material,
       description:item.multilingualData[lang].description,
-      PriceAfterOffer,
-      offer:item.offer,
     };
   }));
 
@@ -508,7 +465,6 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
 
   res.status(200).json(data);
 });
-
 
 exports.addOffer = catchAsync(async (req, res, next) => {
   const productIDs = req.body.products; // Assuming req.body.products is an array of product IDs
@@ -605,6 +561,15 @@ exports.getOfferProducts = catchAsync(async (req, res, next) => {
       return next(new AppError('No products with that offer found', 404));
     }
 
+    products.map(product => {
+      let PriceAfterOffer=  null;
+      if(product.offer) PriceAfterOffer= PriceAfterOfferFunc(product.multilingualData['en'].price,product.offer,lang);
+
+      return {
+        ...product.get({ plain: true }),
+        PriceAfterOffer: PriceAfterOffer,
+      };
+    });
     res.status(200).json(products);
   } catch (error) {
     next(error);
