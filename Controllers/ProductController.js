@@ -453,6 +453,7 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   const data = await Product.findAll({
     where: query,
     attributes: projection,
+    limit: 6,
     });
   
   if (data.length === 0) {
