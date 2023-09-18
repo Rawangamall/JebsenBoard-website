@@ -407,6 +407,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       item.multilingualData.en.price = (item.multilingualData.en.price / Setting.exchangeRate).toFixed(2);
       item.multilingualData.ar.price = parseFloat(item.multilingualData.en.price).toLocaleString('ar-EG');
     }
+    let PriceAfterOffer = null;
+    if(item.offer) PriceAfterOffer= PriceAfterOfferFunc(item.multilingualData['en'].price,item.offer,lang);
 
     return {
       id: item.id,
@@ -414,6 +416,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       image: item.image,
       depth:item.multilingualData[lang].depth,
       price:item.multilingualData[lang].price,
+      priceAfterOffer: PriceAfterOffer,
       style:item.multilingualData[lang].style,
       height:item.multilingualData[lang].height,
       material:item.multilingualData[lang].material,
