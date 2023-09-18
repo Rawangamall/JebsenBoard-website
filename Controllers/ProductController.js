@@ -389,7 +389,7 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
       order.push(['createdAt', 'DESC']);
   }
 
-  const attributes = ['id', 'name', 'multilingualData', 'image'];
+  const attributes = ['id', 'name', 'multilingualData', 'image','offer'];
   const { docs, pages, total } = await Product.paginate({
     where: {
       ...whereClause,
