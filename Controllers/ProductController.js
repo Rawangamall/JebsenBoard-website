@@ -397,8 +397,6 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
     order,
   });
 
-  
-
   const data = await Promise.all (docs.map(async item => {
 
     if(currency == "USD"){

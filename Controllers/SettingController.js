@@ -28,24 +28,23 @@ exports.Update = catchAsync(async (req, res, next) => {
       updatedSettingData.images = (existingSetting.images || []).concat(newImages);
     }
 
-    const MapLocation = existingSetting.mapLocation;
+    // const MapLocation = existingSetting.mapLocation;
     
-    if (updatedSettingData.mapLocation !== undefined || updatedSettingData.mapLocation !== "") {
-      MapLocation.latitude = updatedSettingData.mapLocation.latitude;
-      MapLocation.longitude = updatedSettingData.mapLocation.longitude;
-    } 
-    else if (updatedSettingData.mapLocation == "") {
-      MapLocation.latitude = "";
-      MapLocation.longitude = "";
-    }
+    // if (updatedSettingData.mapLocation !== undefined || updatedSettingData.mapLocation !== "") {
+    //   MapLocation.latitude = updatedSettingData.mapLocation.latitude;
+    //   MapLocation.longitude = updatedSettingData.mapLocation.longitude;
+    // } 
+    // else if (updatedSettingData.mapLocation == "") {
+    //   MapLocation.latitude = "";
+    //   MapLocation.longitude = "";
+    // }
 
-    existingSetting.set({
-      ...updatedSettingData,
-      mapLocation: MapLocation
-    });
+    // existingSetting.set({
+    //   ...updatedSettingData,
+    //   mapLocation: MapLocation
+    // });
 
-    await existingSetting.save();
-
+    await existingSetting.update(updatedSettingData);
     res.status(200).json({ message: ' تم التحديث!' });
   } else {
     res.status(404).json({ message: 'لم يتم التحديث!' });
