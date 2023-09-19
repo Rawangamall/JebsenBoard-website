@@ -548,6 +548,7 @@ exports.deleteOffer = catchAsync(async (req, res, next) => {
 
 exports.getOfferProducts = catchAsync(async (req, res, next) => {
 
+  const lang = null;
   const offer = req.params.value; 
   try {
     // Find all products by their IDs
@@ -561,16 +562,18 @@ exports.getOfferProducts = catchAsync(async (req, res, next) => {
       return next(new AppError('No products with that offer found', 404));
     }
 
-    products.map(product => {
+    const modifiedProducts = products.map(product => {
       let PriceAfterOffer=  null;
       if(product.offer) PriceAfterOffer= PriceAfterOfferFunc(product.multilingualData['en'].price,product.offer,lang);
+      console.log(PriceAfterOffer);
 
       return {
         ...product.get({ plain: true }),
         PriceAfterOffer: PriceAfterOffer,
+        multilingualData: lang==null? product.multilingualData : product.multilingualData[lang]
       };
     });
-    res.status(200).json(products);
+    res.status(200).json(modifiedProducts);
   } catch (error) {
     next(error);
   }

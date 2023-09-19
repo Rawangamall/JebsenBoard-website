@@ -103,16 +103,15 @@ exports.addCategory = catchAsync(async (request, response, next) => {
 exports.getCategory = catchAsync(async (req, res, next) => {
   const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
 
-  console.log("lang",lang)
   const attributes = ['id', 'multilingualData', 'image', 'updatedAt', 'createdAt'];
   const id = req.params.id;
-  
+
   const category = await Category.findByPk(id, { attributes });
   if (!category) return next(new AppError('لم يتم العثور على أي فئة', 404));
-  
+
   const { multilingualData, image, updatedAt, createdAt } = category.toJSON();
-  const  name_en = multilingualData.en.name;
-  const  name_ar = multilingualData.ar.name;
+  const name_en = multilingualData.en.name;
+  const name_ar = multilingualData.ar.name;
 
   let categoryData = {
     image,
@@ -120,32 +119,26 @@ exports.getCategory = catchAsync(async (req, res, next) => {
     createdAt
   };
 
-  if(lang === null)
-  {
+  if (lang === null) {
     categoryData.name_ar = name_ar;
     categoryData.name_en = name_en;
-    console.log("categoryDataname_en",categoryData.name_en)
-  }
-  else if(lang === 'ar')
-  {
+  } else if (lang === 'ar') {
     categoryData.name = name_ar;
-  }
-  else if(lang === 'en')
-  {
+  } else if (lang === 'en') {
     categoryData.name = name_en;
   }
 
-  const products = await Product.count({
+  const products = await Product.findAll({
     where: { category_id: id }
   });
-   modifiedProducts = products.map(product => {
+
+  modifiedProducts = products.map(product => {
     const plainProduct = product.get({ plain: true });
     let PriceAfterOffer = null;
-    if(plainProduct.offer)
-    {
+    if (plainProduct.offer) {
       price = product.multilingualData['en'].price;
-      PriceAfterOffer =  price - (price * plainProduct.offer / 100)
-      if(lang=='en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
+      PriceAfterOffer = price - (price * plainProduct.offer / 100);
+      if (lang == 'en') PriceAfterOffer = PriceAfterOffer.toFixed(2);
       if (lang === 'ar') {
         PriceAfterOffer = PriceAfterOffer.toLocaleString('ar-EG', {
           minimumFractionDigits: 2,
@@ -153,23 +146,23 @@ exports.getCategory = catchAsync(async (req, res, next) => {
         });
       }
     }
-    
+
     return {
       ...plainProduct,
       multilingualData: plainProduct.multilingualData[lang],
-      PriceAfterOffer:  PriceAfterOffer
+      PriceAfterOffer: PriceAfterOffer
     };
   });
-
 
   res.status(200).json({
     status: 'success',
     data: {
       categoryData,
-      productsCount:modifiedProducts
+      products: modifiedProducts
     }
   });
 });
+
 
 
 exports.updateCategory = catchAsync(async (req, res, next) => {
