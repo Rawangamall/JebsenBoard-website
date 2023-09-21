@@ -29,10 +29,76 @@ exports.getAll = catchAsync(async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
-
+    const searchkey = req.query.searchkey || '';
     const offset = (page - 1) * limit;
 
+    console.log('Search Key:', searchkey);
+
+    const searchFields = [
+      'name',
+      'multilingualData.en.height',
+      'multilingualData.ar.height',
+      'multilingualData.ar.depth',
+      'multilingualData.en.depth',
+      'multilingualData.en.material',
+      'multilingualData.ar.material',
+      'multilingualData.en.style',
+      'multilingualData.ar.style',
+      'multilingualData.en.price',
+      'multilingualData.ar.price',
+    ];
+
+    let filter = null;
+
+    if (searchkey) {
+      const regexSearchKey = new RegExp(searchkey, "i");
+
+      filter = {
+        [Op.or]: searchFields.map((field) => ({
+          [field]: {
+            [Op.like]: `%${regexSearchKey.source}%`, // Use the source of the regex for the search key
+          },
+        })),
+      };
+    }
+
+    console.log('Filter:', filter);
+
+    if (!filter) {
+      const { rows, count } = await Product.findAndCountAll({
+        offset,
+        limit,
+      });
+
+      if (count === 0) {
+        return next(new AppError('No products found', 404));
+      }
+
+      let modifiedProducts;
+      modifiedProducts = rows.map((product) => {
+        const plainProduct = product.get({ plain: true });
+       
+        let PriceAfterOffer = null;
+        if (plainProduct.offer) PriceAfterOffer = PriceAfterOfferFunc(plainProduct.multilingualData['en'].price, plainProduct.offer, lang);
+
+        return {
+          ...plainProduct,
+          multilingualData: lang == null ? plainProduct.multilingualData : plainProduct.multilingualData[lang],
+          PriceAfterOffer: PriceAfterOffer,
+        };
+      });
+
+      return res.status(200).json({
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        totalProducts: count,
+        products: modifiedProducts ? modifiedProducts : rows,
+      });
+    }
+
+    // Apply the filter if a search key was provided
     const { rows, count } = await Product.findAndCountAll({
+      where: filter,
       offset,
       limit,
     });
@@ -42,28 +108,26 @@ exports.getAll = catchAsync(async (req, res, next) => {
     }
 
     let modifiedProducts;
-      modifiedProducts = rows.map(product => {
-        const plainProduct = product.get({ plain: true });
-        if (lang === 'en' || lang === 'ar') {
+    modifiedProducts = rows.map((product) => {
+      const plainProduct = product.get({ plain: true });
+      if (lang === 'en' || lang === 'ar') {
+        // Add currency code
+      }
+      let PriceAfterOffer = null;
+      if (plainProduct.offer) PriceAfterOffer = PriceAfterOfferFunc(plainProduct.multilingualData['en'].price, plainProduct.offer, lang);
 
-//add currency code
-        }
-        let PriceAfterOffer = null;
-        if(plainProduct.offer) PriceAfterOffer= PriceAfterOfferFunc(plainProduct.multilingualData['en'].price,plainProduct.offer,lang);
-        
-        return {
-          ...plainProduct,
-          multilingualData: lang==null? plainProduct.multilingualData : plainProduct.multilingualData[lang],
-          PriceAfterOffer:  PriceAfterOffer
-        };
-      });
-    
-    
+      return {
+        ...plainProduct,
+        multilingualData: lang == null ? plainProduct.multilingualData : plainProduct.multilingualData[lang],
+        PriceAfterOffer: PriceAfterOffer,
+      };
+    });
+
     res.status(200).json({
       currentPage: page,
       totalPages: Math.ceil(count / limit),
       totalProducts: count,
-      products: modifiedProducts ? modifiedProducts : rows
+      products: modifiedProducts ? modifiedProducts : rows,
     });
   } catch (error) {
     console.error('Error fetching products:', error);
