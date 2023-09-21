@@ -32,8 +32,6 @@ exports.getAll = catchAsync(async (req, res, next) => {
     const searchkey = req.query.searchkey || '';
     const offset = (page - 1) * limit;
 
-    console.log('Search Key:', searchkey);
-
     const searchFields = [
       'name',
       'multilingualData.en.height',
@@ -61,8 +59,6 @@ exports.getAll = catchAsync(async (req, res, next) => {
         })),
       };
     }
-
-    console.log('Filter:', filter);
 
     if (!filter) {
       const { rows, count } = await Product.findAndCountAll({
@@ -96,7 +92,6 @@ exports.getAll = catchAsync(async (req, res, next) => {
       });
     }
 
-    // Apply the filter if a search key was provided
     const { rows, count } = await Product.findAndCountAll({
       where: filter,
       offset,
@@ -110,9 +105,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
     let modifiedProducts;
     modifiedProducts = rows.map((product) => {
       const plainProduct = product.get({ plain: true });
-      if (lang === 'en' || lang === 'ar') {
-        // Add currency code
-      }
+    
       let PriceAfterOffer = null;
       if (plainProduct.offer) PriceAfterOffer = PriceAfterOfferFunc(plainProduct.multilingualData['en'].price, plainProduct.offer, lang);
 

@@ -5,26 +5,32 @@ const AppError = require("./../utils/appError");
 const catchAsync = require("./../utils/CatchAsync");
 
 const { Op, literal } = require('sequelize');
+const Sequelize = require('sequelize');
 
 const path = require("path");
 const fs = require('fs');
 
 exports.getAll = catchAsync(async (req, res, next) => {
   const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
-
+  const searchkey = req.body.searchkey || '';
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
 
   try {
     const categoriesWithCounts = await Category.findAndCountAll({
+      where: {
+        [Op.or]: [
+          { "multilingualData.en.name": { [Op.like]: `%${searchkey}%` } },
+          { "multilingualData.ar.name": { [Op.like]: `%${searchkey}%` } }
+      ]},
       attributes: {
         include: [
           'id',
           'multilingualData',
           'image',
           [
-            literal('(SELECT COUNT(*) FROM products WHERE products.category_id = category.id)'),
+            Sequelize.literal('(SELECT COUNT(*) FROM products WHERE products.category_id = category.id)'),
             'productCount'
           ]
         ]
@@ -34,20 +40,18 @@ exports.getAll = catchAsync(async (req, res, next) => {
     });
 
     if (categoriesWithCounts.count === 0) {
-      return next(new AppError('لم يتم العثور على أي فئة', 404));
+      return next(new AppError('No categories found', 404));
     }
 
-    // Filter categories based on language
     let localizedCategories = [];
-    if(lang == 'ar' || lang == 'en'){
+    if (lang === 'ar' || lang === 'en') {
       localizedCategories = categoriesWithCounts.rows.map(category => ({
-      id: category.id,
-      name: lang === 'ar' ? category.multilingualData.ar.name : category.multilingualData.en.name,
-      image: category.image,
-      productCount: category.dataValues.productCount || 0
-    }));
-    }
-    else if(lang == null){
+        id: category.id,
+        name: lang === 'ar' ? category.multilingualData.ar.name : category.multilingualData.en.name,
+        image: category.image,
+        productCount: category.dataValues.productCount || 0
+      }));
+    } else if (lang === null) {
       localizedCategories = categoriesWithCounts.rows.map(category => ({
         id: category.id,
         name_ar: category.multilingualData.ar.name,
@@ -56,7 +60,6 @@ exports.getAll = catchAsync(async (req, res, next) => {
         productCount: category.dataValues.productCount || 0
       }));
     }
-     
 
     res.status(200).json({
       totalCategories: categoriesWithCounts.count,
@@ -68,6 +71,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
     next(error);
   }
 });
+
 
 
 exports.addCategory = catchAsync(async (request, response, next) => {
