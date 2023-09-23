@@ -455,6 +455,8 @@ exports.getProductsCategory = catchAsync(async (request, response, next) => {
 
 exports.searchProducts = catchAsync(async (req, res, next) => {
   const searchQuery = req.query.searchkey || "";
+  const page = parseInt(req.query.page) || 1;
+
 
   const query = {
     name: {
@@ -468,17 +470,24 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
     'name',
   ];
     
-  const data = await Product.findAll({
-    where: query,
-    attributes: projection,
-    limit: 6,
+    const { docs, pages, total } = await Product.paginate({
+      where: query,
+      attributes: projection,
+      page,
+      paginate: 6,
     });
-  
-  if (data.length === 0) {
+
+    console.log(total)
+
+  if (docs.length === 0) {
     return next(new AppError(`There are no matched results for your search - لا يوجد منتج متطابق`, 400));
   }
 
-  res.status(200).json(data);
+  res.status(200).json({
+    data:docs,
+    currentPage: page,
+    totalPages:pages
+  });
 });
 
 exports.addOffer = catchAsync(async (req, res, next) => {
