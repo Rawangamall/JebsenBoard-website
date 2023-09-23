@@ -33,17 +33,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
     const offset = (page - 1) * limit;
 
     const searchFields = [
-      'name',
-      'multilingualData.en.height',
-      'multilingualData.ar.height',
-      'multilingualData.ar.depth',
-      'multilingualData.en.depth',
-      'multilingualData.en.material',
-      'multilingualData.ar.material',
-      'multilingualData.en.style',
-      'multilingualData.ar.style',
-      'multilingualData.en.price',
-      'multilingualData.ar.price',
+      'name'
     ];
 
     let filter = null;
@@ -54,7 +44,7 @@ exports.getAll = catchAsync(async (req, res, next) => {
       filter = {
         [Op.or]: searchFields.map((field) => ({
           [field]: {
-            [Op.like]: `%${regexSearchKey.source}%`, // Use the source of the regex for the search key
+            [Op.like]: `%${regexSearchKey.source}%`, 
           },
         })),
       };

@@ -12,7 +12,7 @@ const fs = require('fs');
 
 exports.getAll = catchAsync(async (req, res, next) => {
   const lang = req.originalUrl.toLowerCase().includes('dashboard') ? null : req.headers.lang || 'en';
-  const searchkey = req.body.searchkey || '';
+  const searchkey = req.query.searchkey || '';
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
